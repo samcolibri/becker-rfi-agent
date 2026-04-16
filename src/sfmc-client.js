@@ -8,6 +8,10 @@ let _tokenExpiry = null;
 
 // Map program of interest → SFMC Journey entry event key
 const JOURNEY_ENTRY_EVENTS = {
+  // Confirmation email — fires on ALL paths <20 min (image 12)
+  'Confirmation Email': process.env.SFMC_EVENT_CONFIRMATION || 'RFI_Confirmation_Entry_v1',
+
+  // B2C journeys
   'CPA Demo Journey': process.env.SFMC_EVENT_CPA || 'CPA_Demo_Entry_v1',
   'CMA Demo Journey': process.env.SFMC_EVENT_CMA || 'CMA_Demo_Entry_v1',
   'CPE Free Demo Takers': process.env.SFMC_EVENT_CPE || 'CPE_Demo_Entry_v1',
@@ -15,7 +19,15 @@ const JOURNEY_ENTRY_EVENTS = {
   'EA Demo Journey': process.env.SFMC_EVENT_EA || 'EA_Demo_Entry_v1',
   'CFP Demo Journey': process.env.SFMC_EVENT_CFP || 'CFP_Demo_Entry_v1',
   'General Nurture Journey': process.env.SFMC_EVENT_GENERAL || 'General_Nurture_Entry_v1',
+
+  // Ready to Enroll = "Concierge day one" (image 12)
+  'Concierge Day One': process.env.SFMC_EVENT_CONCIERGE || 'Concierge_DayOne_Entry_v1',
+
+  // B2B
   'B2B Nurture Journey': process.env.SFMC_EVENT_B2B || 'B2B_Nurture_Entry_v1',
+
+  // CSAT — fires at outcome close (image 12: Qualtrics trigger)
+  'CSAT Survey': process.env.SFMC_EVENT_CSAT || 'CSAT_Survey_Entry_v1',
 };
 
 async function getSFMCToken() {

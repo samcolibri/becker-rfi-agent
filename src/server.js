@@ -64,11 +64,19 @@ app.post('/api/submit', async (req, res) => {
     return res.status(500).json({ error: 'Submission failed', detail: result.error });
   }
 
-  console.log(`[RFI] Success: ${result.leadId} → ${result.queue || result.journey}`);
+  const slaMessages = {
+    b2b: 'Thank you! A Becker Business Solutions representative will be in touch within 48 business hours.',
+    support: 'Thank you! Our student support team will be in touch within 1 business day.',
+    exploring: 'Thank you! A Becker advisor will be in touch within 1–4 business hours.',
+    ready: 'Thank you! A Becker enrollment advisor will be in touch within 1–4 business hours.',
+  };
+  const slaMessage = slaMessages[submission.intentPath] || 'Thank you! A Becker representative will be in touch shortly.';
+
+  console.log(`[RFI] Success: ${result.leadId || result.caseId} → ${result.queue || result.journey}`);
   return res.json({
     success: true,
-    message: 'Thank you! A Becker representative will be in touch within 1 business hour.',
-    leadId: result.leadId,
+    message: slaMessage,
+    leadId: result.leadId || result.caseId || null,
     ...(process.env.NODE_ENV === 'development' ? { debug: result } : {}),
   });
 });

@@ -80,15 +80,46 @@ async function processSubmission(submission) {
     }
     log.push(`Email valid: ${emailCheck.action} | business: ${emailCheck.isBusiness}`);
 
-    // Step 2: Dedup check (SF already has native email duplicate rules — we check first to avoid noise)
+    // Step 2: SUPPORT PATH → creates SF Case, not Lead (per image 12 architecture)
+    if (submission.intentPath === 'support') {
+      const sfCase = await sf.createCase({
+        firstName: submission.firstName,
+        lastName: submission.lastName,
+        email: submission.email,
+        topic: submission.supportTopic,
+        product: submission.productInterest,
+        message: submission.message,
+        leadSource: submission.leadSource || 'Web - Contact Us Form',
+      }).catch(err => { log.push(`Case create error: ${err.message}`); return null; });
+
+      if (sfCase) {
+        await sf.assignCaseToQueue(sfCase.id, 'Support Tier 1').catch(() => null);
+        log.push(`SF Case created: ${sfCase.id} → Support queue`);
+      }
+
+      // Confirmation email fires on ALL paths (image 12: <20 min automated)
+      await sfmc.fireJourneyEntry({
+        journey: 'Confirmation Email',
+        email: submission.email,
+        firstName: submission.firstName,
+        lastName: submission.lastName,
+        programOfInterest: submission.productInterest,
+        leadId: sfCase?.id || '',
+        leadStatus: 'Support',
+        brand: 'Becker Professional Education Corporation',
+      }).catch(() => null);
+
+      return { status: 'created', type: 'case', caseId: sfCase?.id, log };
+    }
+
+    // Step 3: Dedup check (SF already has native email duplicate rules — Huma confirmed 2026-04-16)
     const existing = await sf.findExistingRecord(submission.email).catch(() => null);
     if (existing) {
       log.push(`Existing lead found: ${existing.Id} — updating instead of creating`);
-      // Update existing lead with new submission data and return
       return { status: 'updated', leadId: existing.Id, log };
     }
 
-    // Step 2: Account owner lookup (B2B only)
+    // Step 4: Account owner lookup (B2B only)
     let existingAccountOwner = null;
     let existingAccountId = null;
     if (submission.intentPath === 'b2b' && submission.orgName) {
@@ -100,20 +131,33 @@ async function processSubmission(submission) {
       }
     }
 
-    // Step 3: Route the lead
+    // Step 5: Route the lead
     const routingResult = routeLead({
       ...submission,
       existingAccountOwner,
     });
     log.push(`Routing decision: ${JSON.stringify(routingResult)}`);
 
-    // Step 4: Build and create SF Lead record
+    // Step 6: Build and create SF Lead record
     const leadRecord = buildLeadRecord(submission, routingResult, existingAccountId);
     const created = await sf.createLead(leadRecord);
     const leadId = created.id;
     log.push(`Lead created: ${leadId}`);
 
-    // Step 5: CommSubscriptionConsent record (CDM model)
+    // Step 6a: SFMC confirmation email — ALL paths · <20 min · automated (image 12)
+    await sfmc.fireJourneyEntry({
+      journey: 'Confirmation Email',
+      email: submission.email,
+      firstName: submission.firstName,
+      lastName: submission.lastName,
+      programOfInterest: submission.productInterest,
+      leadId,
+      leadStatus: mapIntentToStatus(submission.intentPath),
+      brand: 'Becker Professional Education Corporation',
+    }).catch(err => log.push(`Confirmation email error (non-fatal): ${err.message}`));
+    log.push('SFMC confirmation email triggered (<20 min)');
+
+    // Step 7: CommSubscriptionConsent record (CDM model)
     if (submission.consentGiven) {
       await sf.createCommSubscriptionConsent({
         leadId,
@@ -123,7 +167,7 @@ async function processSubmission(submission) {
       log.push('CommSubscriptionConsent created');
     }
 
-    // Step 6: Assign to queue or rep
+    // Step 8: Assign to queue or rep
     if (routingResult.leadType === 'B2B') {
       if (routingResult.rep) {
         await sf.assignLeadToRep(leadId, routingResult.rep);
@@ -134,10 +178,16 @@ async function processSubmission(submission) {
       }
     }
 
-    // Step 7: Fire SFMC journey entry
+    // Step 9: Fire SFMC journey entry (separate from confirmation email)
     const journey = routingResult.journey || mapProgramToJourney(submission.productInterest);
-    if (journey && submission.intentPath !== 'support') {
-      const sfmcJourney = routingResult.leadType === 'B2B' ? 'B2B Nurture Journey' : journey;
+    if (journey) {
+      // Ready to enroll = "Concierge day one" journey (per image 12)
+      const sfmcJourney = submission.intentPath === 'ready'
+        ? 'Concierge Day One'
+        : routingResult.leadType === 'B2B'
+          ? 'B2B Nurture Journey'
+          : journey;
+
       await sfmc.fireJourneyEntry({
         journey: sfmcJourney,
         email: submission.email,

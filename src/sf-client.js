@@ -113,6 +113,30 @@ async function assignLeadToRep(leadId, repName) {
   return sfRequest('PATCH', `/sobjects/Lead/${leadId}`, { OwnerId: userId });
 }
 
+// Create a SF Case for student support path (image 12: support creates Case not Lead)
+async function createCase({ firstName, lastName, email, topic, product, message, leadSource }) {
+  return sfRequest('POST', '/sobjects/Case', {
+    SuppliedName: `${firstName} ${lastName}`,
+    SuppliedEmail: email,
+    Subject: `Student Support Request — ${topic || 'General'}`,
+    Description: message || '',
+    Origin: leadSource || 'Web - Contact Us Form',
+    Product__c: product || null,
+    Brand__c: 'Becker Professional Education Corporation',
+    Status: 'New',
+    Priority: 'Medium',
+  });
+}
+
+// Assign a Case to a queue
+async function assignCaseToQueue(caseId, queueName) {
+  const query = `SELECT Id FROM Group WHERE Name = '${queueName}' AND Type = 'Queue' LIMIT 1`;
+  const result = await sfRequest('GET', `/query?q=${encodeURIComponent(query)}`);
+  const queueId = result.records?.[0]?.Id;
+  if (!queueId) throw new Error(`Queue not found: ${queueName}`);
+  return sfRequest('PATCH', `/sobjects/Case/${caseId}`, { OwnerId: queueId });
+}
+
 module.exports = {
   findExistingRecord,
   findAccountOwner,
@@ -120,4 +144,6 @@ module.exports = {
   createCommSubscriptionConsent,
   assignLeadToQueue,
   assignLeadToRep,
+  createCase,
+  assignCaseToQueue,
 };
