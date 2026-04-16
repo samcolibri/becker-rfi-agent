@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "build:client": "cd client && npm install && npm run build",
+    "build": "npm run build:client",
     "test": "jest --testPathPattern=tests/ --verbose",
     "test:routing": "jest tests/routing-engine.test.js --verbose"
   },

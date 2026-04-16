@@ -97,6 +97,11 @@ app.post('/api/submit', async (req, res) => {
   });
 });
 
+// SPA fallback — serve React app for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Becker RFI Agent running on :${PORT}`));
 
