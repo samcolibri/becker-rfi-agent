@@ -254,9 +254,13 @@ All journeys triggered by a Journey Builder API entry event. Payload: ContactKey
 | B2C — Ready to Enroll | Concierge Day One | `SFMC_EVENT_CONCIERGE` | intentPath = ready (all programs) |
 | B2B | B2B Nurture Journey | `SFMC_EVENT_B2B` | intentPath = b2b |
 | No program match | General Nurture Journey | `SFMC_EVENT_GENERAL` | fallback |
-| All paths (post-touch) | CSAT Survey | `SFMC_EVENT_CSAT` | First rep/support activity — NOT currently wired |
+| All paths (post-touch) | CSAT Survey | `SFMC_EVENT_CSAT` | First rep/support activity |
 
-**CSAT note:** The CSAT trigger fires post-first-touch via a Journey Builder activity, not just post-purchase. This measures satisfaction with the first impression (was the form clear? did the right person follow up in time?). This is a gap today — it needs to be built as a Journey Builder activity in SFMC, connected to first-activity outcome in SF. **This is Phase 1 scope.**
+**CSAT — Phase 1 scope. This is an SFMC configuration task, not a code change.**
+- **Who builds it:** SFMC admin in Journey Builder
+- **How:** Add a Qualtrics Survey / Send Email activity at the end of each journey, triggered after a wait-for-SF-activity step (first task or call logged on the Lead or Case)
+- **Why post-first-touch, not post-purchase:** measures whether the *form is working* — did the right person respond in time? Not whether a sale happened months later
+- **SF side:** requires a SF→SFMC data event when first sales/support activity is logged — this is a Journey Builder trigger, not custom API code
 
 ---
 
@@ -426,18 +430,27 @@ Prod
 - [ ] Routing matrix matches your Excel (org type × size → queue, see table above)
 - [ ] Organization Type picklist values are correct for prospects
 - [ ] SLA commitments: B2C 1–4 hrs, B2B 48 hrs, Support 1 business day
-- [ ] "Other" org name always → Inside Sales
-- [ ] Phase 1 = Contact Us / RFI only (webinars/events in Phase 2)
-- [ ] CSAT fires post-first-touch (not just post-purchase) — confirm this is the intent
+- [ ] "Other" org name always → Inside Sales (confirmed on call — report on "Other" frequency to monitor)
+- [ ] Phase 1 = Contact Us / RFI only (webinars/events/flipbooks in Phase 2)
+- [ ] CSAT fires post-first-touch — not just post-purchase (confirm this is the intent)
+- [ ] Review **form.html** — wording, field labels, intent card copy — and flag any changes needed
+- [ ] Aaron confirmed as B2C UAT tester; Haley confirmed for support path UAT
 
 **Angel + Shar — please confirm:**
 - [ ] **BLOCKING: Exact SF queue object names** (see queue name conflict above)
 - [ ] All 9 new Lead custom fields approved for creation
 - [ ] `Organization_Type__c` added to Farside CDM model
-- [ ] `CommSubscriptionConsent__c` object configured (14 channel types)
-- [ ] Native SF lead duplicate rules sufficient (email-based dedup)
+- [ ] `CommSubscriptionConsent__c` object configured (SubscriptionChannel__c includes "Commercial Marketing")
+- [ ] Native SF lead duplicate rules sufficient (email-based dedup — confirmed by Huma on call)
 - [ ] 11 SFMC entry event API keys provided (see env var table above)
 - [ ] SF Connected App created with correct OAuth scopes for API user
+- [ ] CSAT configured in Journey Builder (Qualtrics activity post-first-touch on each journey)
+- [ ] Lead list views created for each of the 6 queues (see SETUP.md §4)
+
+**Huma:**
+- [ ] **BLOCKING: Confirm existing SF lead assignment rules are inactive** or will not conflict with API OwnerId PATCH (see SETUP.md §3)
+- [ ] Haley given SF sandbox access for UAT
+- [ ] Run SF report: Contact Us leads → time to first sales activity (establishes SLA baseline before go-live)
 
 **Sam:**
 - [ ] Connect with Dakshesh re: Drupal integration path

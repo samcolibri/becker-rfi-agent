@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const { processSubmission } = require('./lead-processor');
+const sf = require('./sf-client');
 
 const app = express();
 app.use(express.json());
@@ -11,12 +12,26 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
 
+// Account name typeahead — powers org name autocomplete on the form
+// Monica: "when they start typing, it will start populating with business accounts"
+app.get('/api/accounts', async (req, res) => {
+  const q = (req.query.q || '').trim();
+  if (q.length < 2) return res.json([]);
+  try {
+    const results = await sf.searchAccounts(q);
+    res.json(results);
+  } catch (err) {
+    console.error('[RFI] Account search error:', err.message);
+    res.json([]);
+  }
+});
+
 // Form submission endpoint
 app.post('/api/submit', async (req, res) => {
   const {
     firstName, lastName, email, phone,
     intentPath,                          // exploring | ready | b2b | support
-    productInterest,
+    productInterest, supportTopic,
     orgName, orgType, orgSize, state,
     roleType, graduationYear, beckerStudentEmail,
     message, preferredLearning,
@@ -41,6 +56,7 @@ app.post('/api/submit', async (req, res) => {
     phone: phone || null,
     intentPath: intentPath.toLowerCase(),
     productInterest: productInterest || null,
+    supportTopic: supportTopic || null,
     orgName: orgName || null,
     orgType: orgType || null,
     orgSize: orgSize || null,

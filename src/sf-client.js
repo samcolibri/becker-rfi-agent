@@ -53,6 +53,15 @@ async function sfRequest(method, path, body) {
   return res.status === 204 ? null : res.json();
 }
 
+// Account name typeahead — powers org name autocomplete on the form
+// Returns [{id, name}] for accounts matching the search term
+async function searchAccounts(q) {
+  const safe = q.replace(/'/g, "\\'").replace(/%/g, '\\%').replace(/_/g, '\\_');
+  const query = `SELECT Id, Name FROM Account WHERE Name LIKE '${safe}%' ORDER BY Name LIMIT 10`;
+  const result = await sfRequest('GET', `/query?q=${encodeURIComponent(query)}`);
+  return (result.records || []).map(r => ({ id: r.Id, name: r.Name }));
+}
+
 // Dedup check: find existing lead/contact by email
 async function findExistingRecord(email) {
   const query = `SELECT Id, OwnerId, Owner.Name, RecordType.Name FROM Lead WHERE Email = '${email.replace(/'/g, "\\'")}' AND IsConverted = false LIMIT 1`;
@@ -138,6 +147,7 @@ async function assignCaseToQueue(caseId, queueName) {
 }
 
 module.exports = {
+  searchAccounts,
   findExistingRecord,
   findAccountOwner,
   createLead,

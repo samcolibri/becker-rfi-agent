@@ -51,7 +51,33 @@ Once confirmed, if any names differ, provide the correct names and the engine wi
 
 ---
 
-### 3. Salesforce — Connected App (Angel + Huma)
+### 3. Salesforce — Existing Lead Assignment Rules (Huma — BLOCKING)
+
+Huma noted on the call: "currently we have certain lead assignment rules in the system, we are not utilizing it, but we can definitely... we have implemented in the past."
+
+> ⚠️ **If any existing SF lead assignment rules are active, they will override the API's `OwnerId` PATCH calls and silently break all routing.**
+
+Before go-live, Huma must:
+1. SF Setup → Lead Assignment Rules → confirm whether any rules are currently active (checkbox: "Default")
+2. If active rules exist: either deactivate them, or confirm they won't conflict with API-set OwnerId values
+3. The routing engine sets `OwnerId` directly via `PATCH /sobjects/Lead/{id}` — SF assignment rules run after record creation, not after a PATCH, so they should not interfere. But confirm this with a smoke test: create a test lead via API, verify OwnerId matches the queue the engine assigned
+
+---
+
+### 4. Salesforce — Queue List Views (Angel Cichy)
+
+Monica described this at 10:41: *"We would create views for each of the teams. Each team would be able to see any lead that is assigned either to the queue or to a sales rep who is in that queue."*
+
+Angel/Huma must create a **Lead List View** for each of the 6 sales queues:
+- Filter: `Owner = [Queue Name]` OR `Owner = [Rep in that team]` AND `IsConverted = false`
+- Columns to include: Name, Company, Organization Type, Organization Size, Program of Interest, Lead Status, Created Date
+- Share each view with the relevant queue group
+
+This is an SF admin configuration task, not code.
+
+---
+
+### 5. Salesforce — Connected App (Angel + Huma)
 
 The API uses OAuth 2.0 password flow. A Connected App must exist in the SF org:
 
@@ -67,7 +93,7 @@ The API uses OAuth 2.0 password flow. A Connected App must exist in the SF org:
 
 ---
 
-### 4. Salesforce Marketing Cloud — Server-to-Server Package (SFMC admin)
+### 6. Salesforce Marketing Cloud — Server-to-Server Package (SFMC admin)
 
 1. SFMC Setup → Installed Packages → New Package
 2. Add component: API Integration → Server-to-Server
@@ -76,7 +102,7 @@ The API uses OAuth 2.0 password flow. A Connected App must exist in the SF org:
 
 ---
 
-### 5. SFMC — Journey Entry Event Keys (SFMC admin)
+### 7. SFMC — Journey Entry Event Keys (SFMC admin)
 
 For each journey below, go to Journey Builder → open the journey → Entry Source → API Entry Event → copy the **Event Definition Key**.
 
@@ -98,7 +124,7 @@ For each journey below, go to Journey Builder → open the journey → Entry Sou
 
 ---
 
-### 6. Hunter.io API Key (Sam)
+### 8. Hunter.io API Key (Sam)
 
 Used for email deliverability verification and spam filtering.
 

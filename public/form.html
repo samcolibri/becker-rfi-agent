@@ -105,6 +105,30 @@
       transition: border-color 0.2s;
       appearance: none;
     }
+
+    .autocomplete-wrap { position: relative; }
+    .autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1.5px solid #0056b3;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+    }
+    .autocomplete-list li {
+      padding: 9px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      list-style: none;
+    }
+    .autocomplete-list li:hover { background: #f0f6ff; }
+    .autocomplete-list .no-match { color: #888; font-style: italic; cursor: default; }
     input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: #0056b3;
@@ -217,7 +241,12 @@
     <div id="b2bFields" style="display:none">
       <div class="field-group">
         <label>Company / Organization name <span class="req">*</span></label>
-        <input type="text" id="orgName" placeholder="Acme Accounting Group" />
+        <div class="autocomplete-wrap">
+          <input type="text" id="orgName" placeholder="Start typing your company name..." autocomplete="off" oninput="accountSearch(this.value)" />
+          <ul class="autocomplete-list" id="orgNameList"></ul>
+        </div>
+        <input type="hidden" id="orgNameId" />
+        <div style="font-size:12px;color:#888;margin-top:4px;">If your organization doesn't appear, type the full name and continue.</div>
       </div>
       <div class="row-2">
         <div class="field-group">
@@ -421,7 +450,8 @@
   <div class="success" id="successState">
     <div class="check">✅</div>
     <h2>You're all set!</h2>
-    <p id="successMsg">Thank you! A Becker representative will be in touch shortly. Check your inbox for a confirmation.</p>
+    <p id="successMsg">Thank you! A Becker representative will be in touch shortly.</p>
+    <p style="font-size:13px;color:#888;margin-top:12px;">Check your inbox — a confirmation email is on its way.</p>
   </div>
 </div>
 
@@ -431,8 +461,45 @@
 
   // Capture UTM params from URL on load
   const utmParams = {};
-  new URLSearchParams(window.location.search).forEach((v, k) => {
-    if (k.startsWith('utm_')) utmParams[k] = v;
+  new URLSearchParams(window.location.search).forEach((val, k) => {
+    if (k.startsWith('utm_')) utmParams[k] = val;
+  });
+
+  // Org name typeahead — searches SF Account list
+  let _accountTimer = null;
+  async function accountSearch(q) {
+    clearTimeout(_accountTimer);
+    const list = document.getElementById('orgNameList');
+    document.getElementById('orgNameId').value = '';
+    if (q.length < 2) { list.style.display = 'none'; return; }
+    _accountTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/accounts?q=${encodeURIComponent(q)}`);
+        const accounts = await res.json();
+        list.innerHTML = '';
+        if (accounts.length === 0) {
+          list.innerHTML = '<li class="no-match">No matching accounts — your typed name will be used</li>';
+        } else {
+          accounts.forEach(a => {
+            const li = document.createElement('li');
+            li.textContent = a.name;
+            li.onclick = () => {
+              document.getElementById('orgName').value = a.name;
+              document.getElementById('orgNameId').value = a.id;
+              list.style.display = 'none';
+            };
+            list.appendChild(li);
+          });
+        }
+        list.style.display = 'block';
+      } catch (_) { list.style.display = 'none'; }
+    }, 300);
+  }
+  document.addEventListener('click', e => {
+    const list = document.getElementById('orgNameList');
+    if (list && !list.contains(e.target) && e.target.id !== 'orgName') {
+      list.style.display = 'none';
+    }
   });
 
   function selectIntent(el) {
@@ -519,6 +586,7 @@
       state: v('hqState') || v('stateB2C'),
       roleType: v('roleType'),
       productInterest: v('productInterestB2B') || v('productInterestB2C') || v('supportProduct'),
+      supportTopic: v('supportTopic'),
       graduationYear: v('graduationYear'),
       beckerStudentEmail: v('beckerStudentEmail'),
       message: v('message'),
@@ -535,6 +603,8 @@
       });
 
       if (res.ok) {
+        const data = await res.json();
+        document.getElementById('successMsg').textContent = data.message || 'Thank you! A Becker representative will be in touch shortly.';
         document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
         document.getElementById('progressFill').style.width = '100%';
         document.getElementById('successState').style.display = 'block';
