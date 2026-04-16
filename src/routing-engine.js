@@ -93,7 +93,9 @@ function matchRegion(state, regions) {
 }
 
 // Route a B2C/individual lead — returns { queue, journey, reason }
-function routeB2C({ intentPath, programOfInterest, isCurrentStudent }) {
+function routeB2C({ intentPath, programOfInterest, productInterest, isCurrentStudent }) {
+  // Accept either field name
+  programOfInterest = programOfInterest || productInterest;
   if (intentPath === 'support') {
     return {
       queue: QUEUES.CS_EXPANSION,
