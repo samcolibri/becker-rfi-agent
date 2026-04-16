@@ -1,6 +1,7 @@
 const { routeLead, mapProgramToJourney } = require('./routing-engine');
 const sf = require('./sf-client');
 const sfmc = require('./sfmc-client');
+const { validateEmail } = require('./email-validator');
 
 // UTM fields to capture
 const UTM_FIELDS = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'];
@@ -22,7 +23,8 @@ function buildLeadRecord(submission, routingResult, existingAccountId) {
     Email: email,
     Phone: phone || null,
     Company: orgName || (isB2B ? 'Unknown' : lastName),
-    LeadSource: 'Web - RFI Form',
+    // LeadSource = WHERE they came from (channel), not B2B/B2C (per Angel + Josh 2026-04-16)
+    LeadSource: submission.leadSource || 'Web - Contact Us Form',
     Brand__c: 'Becker Professional Education Corporation',
     Organization_Type__c: orgType || null,
     Organization_Size__c: orgSize || null,
@@ -68,7 +70,17 @@ async function processSubmission(submission) {
   const log = [];
 
   try {
-    // Step 1: Dedup check
+    // Step 1: Email validation + spam/bot detection (Monica flagged spam as major issue)
+    const emailCheck = await validateEmail(
+      submission.email, submission.firstName, submission.lastName, submission.message
+    );
+    if (!emailCheck.valid) {
+      log.push(`REJECTED: ${emailCheck.reason}`);
+      return { status: 'rejected', reason: emailCheck.reason, log };
+    }
+    log.push(`Email valid: ${emailCheck.action} | business: ${emailCheck.isBusiness}`);
+
+    // Step 2: Dedup check (SF already has native email duplicate rules — we check first to avoid noise)
     const existing = await sf.findExistingRecord(submission.email).catch(() => null);
     if (existing) {
       log.push(`Existing lead found: ${existing.Id} — updating instead of creating`);

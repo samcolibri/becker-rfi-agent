@@ -165,7 +165,7 @@
 <body>
 
 <div class="card">
-  <div class="sla-badge">Typical reply within 1 business hour</div>
+  <div class="sla-badge" id="slaBadge">We'll be in touch within 1 business day</div>
   <h1>How can we help?</h1>
   <p class="subtitle">Tell us a little about yourself and we'll connect you with the right person.</p>
 
@@ -421,7 +421,7 @@
   <div class="success" id="successState">
     <div class="check">✅</div>
     <h2>You're all set!</h2>
-    <p>Thank you! A Becker representative will be in touch within <strong>1 business hour</strong>. Check your inbox for a confirmation.</p>
+    <p id="successMsg">Thank you! A Becker representative will be in touch shortly. Check your inbox for a confirmation.</p>
   </div>
 </div>
 
@@ -439,6 +439,15 @@
     document.querySelectorAll('.intent-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
     selectedIntent = el.dataset.intent;
+    // Update SLA badge and success message based on intent
+    const badge = document.getElementById('slaBadge');
+    if (selectedIntent === 'b2b') {
+      badge.textContent = 'We\'ll be in touch within 48 business hours';
+    } else if (selectedIntent === 'support') {
+      badge.textContent = 'We\'ll be in touch within 1 business day';
+    } else {
+      badge.textContent = 'We\'ll be in touch within 1–4 business hours';
+    }
     setTimeout(() => goTo(2), 200);
   }
 

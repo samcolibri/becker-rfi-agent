@@ -3,6 +3,97 @@
 # DO NOT EDIT field values or routing rules without re-validating against source Excel
 
 ## ═══════════════════════════════════════════════════════
+## FULL TRANSCRIPT INTELLIGENCE (1h6m45s — April 16, 2026)
+## Source: /docs/B2B Lead Routing and New Form Fields Requirement Gathering.docx
+## ═══════════════════════════════════════════════════════
+
+### Key Decisions Made in the Meeting
+
+**1. SLA — CORRECTED from initial design**
+- Angel initially pitched: 1 hour
+- Monica corrected: outside sales reps travel, can't respond in 1 hour
+- **Final agreed SLAs:**
+  - B2C (inside sales): **1–4 business hours** (aspirational; run SF report to confirm baseline)
+  - B2B (outside sales): **48 business hours**
+  - Support: 1 business day
+- Action: Huma to run SF report → lead creation to first sales activity (existing leads)
+
+**2. LeadSource = CHANNEL, not B2B/B2C**
+- Angel: "Lead source should not say B2B. It needs to show where it came from."
+- Josh confirmed: LeadSource = Web/Webinar/Flipbook/Event/Conference
+- NOT "B2B Query" as the current form has it
+
+**3. Deduplication — USE SF NATIVE RULES**
+- Huma confirmed: SF already has lead duplicate rules (email-based)
+- Same email → updates existing lead, doesn't create duplicate
+- Sam does NOT need to build custom dedup — SF handles it natively
+
+**4. Drupal Integration (NEW — critical)**
+- Josh: "we just don't have the Drupal resources to develop that smart form"
+- Charlene: Drupal team tied up with payment widget + guest checkout
+- Sam committed to connect with **Dakshesh** (5X Drupal team)
+- Sam can connect Drupal via REST API — "big platform, must have REST API"
+- Form can also be delivered as standalone HTML embed in a Drupal block
+- Drupal work is SEPARATE from routing/SF work — routing engine is fully testable without it
+
+**5. Spam / Bot filtering (NEW)**
+- Monica: "I am amazed at the number of spam contact us forms we get... bot type things"
+- Current RFI goes to Verse → Inside Sales manually; Monica used to delete leads manually
+- Sam proposed: waterfall enrichment (Clay + 6sense already at Colibri), Hunter.io API
+- Sam: "hunter.io API — 10 minute job" for email validation
+- Monica: caveat — some B2B buyers use Gmail; enrichment is fuzzy for personal emails
+- Sam: "works best with business emails; Gmail → check if valid only"
+- **Built:** email-validator.js with spam patterns, disposable domains, Hunter.io integration
+
+**6. Organization Type → Farside CDM (NEW)**
+- Angel: "we're going to need to add org type to our Farside data model"
+- Angel to follow up on Farside CDM alignment
+- Existing SF "industry type" field is internal-only — NOT what goes on the form
+- New Organization_Type__c = prospect-facing values (Accounting Firm, Corp, etc.)
+
+**7. Phase 1 vs Phase 2 (CONFIRMED)**
+- Phase 1: Contact Us / RFI form only
+- Phase 2+: Same segmentation model extended to webinars, events, conferences, flipbooks
+- Monica: "we need to be asking those questions on every type of intake form"
+- Josh: floating RFI widget on every page (future)
+
+**8. Typo / Fuzzy Org Name matching (DECIDED)**
+- Josh raised: what if they type "Amazone" instead of "Amazon"?
+- Monica: "If it's weird and outside the norm, it goes to Inside Sales first"
+- Don't try to fuzzy-match — too many companies with close names
+- Create a report on "Other" category to monitor frequency
+
+**9. Sam's Architecture Process (what Sam committed to)**
+- "I will create a git and whatever we spoke here, I will assemble in a repo in an architecture and then I will send it today before EOD"
+- "You guys approve the architecture. Once you approve the architecture, we go in development"
+- ✅ DONE: repo is live at github.com/samcolibri/becker-rfi-agent
+- ✅ DONE: ARCHITECTURE.md created for stakeholder review
+
+**10. The Bigger Vision (context for future phases)**
+- Angel: "single smarter intake form — every person landing on Becker website funneled to singular segmented intake form process"
+- Monica: "I think we're going to get a lot more B2C leads, actually. The biggest bang will be B2C."
+- Current form is "a hidden form" — "it's somewhat of a hidden form and we're not pointing people to that space"
+- Josh: form should float on all pages so anyone can access it anytime
+
+### People & Roles (full from transcript)
+| Person | Role | Responsibility |
+|---|---|---|
+| Sam Chaudhary | AI Architect/Developer | Build routing engine, SF integration, architecture |
+| Huma Yousuf | Salesforce Developer | Dev coordination, smoke testing, working session with Sam |
+| Monica Callahan | Business Owner | Requirements, field mapping, routing logic owner |
+| Josh Elefante | Product Lead | Form UX direction, floating widget idea, webinar takeover |
+| Angel Cichy | Salesforce Product/Admin | SF field creation, Farside CDM, requirements approval |
+| Charlene Ceci (Shar) | Drupal/DevOps | Release cycles, Drupal resources, deployment |
+| Shital Patil | Engineering Manager | Sprint oversight, Cloud access for Huma |
+| Smita Katariya | VP/Director | Sponsor — "why can't we do this in two days?" |
+| Dakshesh | 5X Drupal Team Lead | Sam must connect for Drupal integration |
+| Aaron | Unknown | B2C side UAT testing |
+| Haley | Unknown | UAT tester — needs sandbox access |
+| Jackie Hartwig + Annette Lee | Marketing | KPIs and baselines |
+
+---
+
+## ═══════════════════════════════════════════════════════
 ## PROJECT CONTEXT & THE PROBLEM BEING SOLVED
 ## ═══════════════════════════════════════════════════════
 
