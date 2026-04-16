@@ -230,6 +230,12 @@ becker-rfi-agent/
 - [ ] Native SF lead duplicate rules confirmed as sufficient (email-based)
 - [ ] SFMC entry event API keys for each journey (needed to wire journey triggers)
 
+> ⚠️ **BLOCKING — Queue Name Conflict:**
+> The architecture diagram shows queue names "Learning Advisor queue", "Enrollment team queue", and "Business Solutions queue".
+> Monica's Excel routing matrix uses: Inside Sales, Global Firms, New Client Acquisition, University, International, Customer Success & Expansion.
+> **The routing engine currently uses Monica's Excel names.** If the actual SF queue objects are named per the diagram, all `assignLeadToQueue()` calls will fail.
+> **Angel: please confirm the exact SF queue object names before UAT.** If they differ, provide the mapping and the engine will be updated in one pass.
+
 **Sam's action item:**
 - [ ] Connect with Dakshesh (5X Drupal team) re: form embed options
 
