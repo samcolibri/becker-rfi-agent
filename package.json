@@ -1,0 +1,23 @@
+{
+  "name": "becker-rfi-agent",
+  "version": "1.0.0",
+  "description": "Intelligent RFI lead routing for Becker Professional Education — form → Salesforce",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest --testPathPattern=tests/ --verbose",
+    "test:routing": "jest tests/routing-engine.test.js --verbose"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

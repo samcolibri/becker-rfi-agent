@@ -1,0 +1,41 @@
+{
+  "team": "New Client Acquisition",
+  "year": 2026,
+  "reps": [
+    {
+      "name": "Stephanie Anastasio",
+      "states": ["OH","ID","WV","DC","MD","NY","PA","NJ","CT","VA","RI","DE","NH","MA","ME"],
+      "accountTypes": ["F1000","Banks","Insurance"],
+      "sme": ["Pharma","Energy/Utilities"]
+    },
+    {
+      "name": "Jill Kirkpatrick",
+      "states": ["OK","KS","MO","IL","MI","WI","NE","IA","MN","SD","ND","AR","NV"],
+      "accountTypes": ["F1000","Banks","Insurance"],
+      "sme": ["Oil & Gas","Gaming"],
+      "note": "East TX included"
+    },
+    {
+      "name": "Sharice Jessup",
+      "states": ["AZ","UT","CO","WY","MT","HI"],
+      "stateRegions": ["CA-NORTH"],
+      "accountTypes": ["F1000","Banks","Insurance"],
+      "sme": ["Healthcare","Wine & Spirits","Cannabis"]
+    },
+    {
+      "name": "Henry Quinones",
+      "states": ["NM","AL","GA","NC","SC","FL","TN","KY","LA","MS"],
+      "stateRegions": ["TX-WEST"],
+      "accountTypes": ["F1000","Banks","Insurance"],
+      "sme": ["Manufacturing","Gaming","Wine & Spirits"]
+    },
+    {
+      "name": "Nahal Safagh",
+      "states": ["OR","WA","AK"],
+      "stateRegions": ["CA-SOUTH"],
+      "accountTypes": ["Firms 150-350","F1000","Banks"],
+      "sme": ["Wine & Spirits","Cannabis"],
+      "note": "Also covers 150-350 employee firms nationally"
+    }
+  ]
+}

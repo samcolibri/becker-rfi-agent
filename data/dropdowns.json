@@ -1,0 +1,52 @@
+{
+  "productInterest": [
+    "Certified Financial Planner",
+    "Certified Internal Auditor",
+    "Certified Management Accountant",
+    "Certified Public Accountant",
+    "Continuing Professional Education",
+    "Enrolled Agent",
+    "Staff Level Training",
+    "CIA Challenge Exam"
+  ],
+  "organizationType": [
+    "Accounting Firm",
+    "Corporation/Healthcare/Bank/Financial Institution",
+    "Consulting Firm",
+    "CPA Alliance",
+    "Government Agency/Not for Profit Organization",
+    "Society/Chapter",
+    "Non-US Organization",
+    "Student",
+    "University",
+    "Other"
+  ],
+  "organizationTypeB2C": [
+    "Accounting Firm",
+    "Corporation/Healthcare/Bank/Financial Institution",
+    "Consulting Firm",
+    "CPA Alliance",
+    "Government Agency/Not for Profit Organization",
+    "Society/Chapter",
+    "Non-US Organization",
+    "Student",
+    "University",
+    "Other",
+    "None"
+  ],
+  "numberOfEmployees": ["<25","26-100","101-250","251+"],
+  "organizationSize": ["1-10","11-25","26-50","51-100","101-250","251-500","500+"],
+  "requestingFor": ["Myself","My organization"],
+  "roleType": [
+    "Undergrad Student",
+    "Grad Student",
+    "Professor",
+    "Supervisor/Director/Manager",
+    "Partner/CEO/CFO",
+    "Administrator",
+    "Unemployed",
+    "Learning/Training Leader",
+    "Staff Accountant",
+    "Other"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "Customer Success & Expansion": {
+    "manager": "Jenae Klinke",
+    "reps": ["Alexandria Reyes","Ashley Stephens","Jenae Klinke","JoAnn Veiga","Laura Copley","Melissa VanFossen","Shaida Hong"]
+  },
+  "Global Firms": {
+    "manager": "Andrea Jennings",
+    "reps": ["Andrea Jennings","Kristin Curcuru","Moira Gordon","Richard Slusz"]
+  },
+  "Inside Sales": {
+    "manager": "Mark Pisani",
+    "reps": ["Aaron Smith","Andrew Masiewicz","Ashley Griffin","Austin Shields","Brock Batchko","Catalina Gamez","Glenn Proud","Matt Anklam","Matthew Clark","Michelle Mazurek","Ruben Munoz","Sarah Lunday","Stacey Bachara","Tim Carpenter","Zina Fitzgerald"]
+  },
+  "International": {
+    "manager": null,
+    "reps": ["Ben Wong","Digvijay Singh","Eduardo Escalante","Manmeet Anand"]
+  },
+  "New Client Acquisition": {
+    "manager": "Angelique Watson",
+    "reps": ["Angelique Watson","Henry Quinones","Jill Kirkpatrick","Nahal Shafagh","Sara DiGello","Sharice Jessup","Stephanie Anastasio"]
+  },
+  "University": {
+    "managers": ["Andrea Jennings","Carson Crosby","Julie Champion","Mychal Patterson"],
+    "reps": ["Aaron Gocer","Addie Mitchell","Amy Johnson","Amy Napolski","Angela White","Anthony Quintero","Chandler Lackey","Chantel Garrone","Christian Santiago","Diego Mansilla","Ellen Garner Crawford","Hayley Bales","Jackie Oblinger","Jeffrey Sampson","Kim Holland","Kristine Snyder","Kurtis Williams","Lindsay Sauter","Lisa Easley","Lupe Casillas","Michael Ceglie","Moyrali Roig","Natasha Nurse","Robyn Hampton Peers","Sandy Broadbent","Sharrieff Hazim","Stephen McIntosh"]
+  }
+}
