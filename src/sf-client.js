@@ -84,7 +84,12 @@ async function findAccountOwner(companyName) {
   };
 }
 
-// Create a Lead record
+// Write form submission to ExternalWebform__c — SF Flow handles dedup, Lead/Opp/Case creation
+async function createExternalWebform(fields) {
+  return sfRequest('POST', '/sobjects/ExternalWebform__c', fields);
+}
+
+// Create a Lead record (kept for reference — no longer called directly by lead-processor)
 async function createLead(fields) {
   return sfRequest('POST', '/sobjects/Lead', fields);
 }
@@ -150,6 +155,7 @@ module.exports = {
   searchAccounts,
   findExistingRecord,
   findAccountOwner,
+  createExternalWebform,
   createLead,
   createCommSubscriptionConsent,
   assignLeadToQueue,

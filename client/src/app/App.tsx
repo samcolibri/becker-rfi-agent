@@ -255,23 +255,24 @@ export default function App() {
     }
   };
 
+  const selectIntent = (selected: Intent) => {
+    setIntent(selected);
+    if (selected === 'exploring') {
+      setSubstep('secondary');
+    } else if (selected === 'enrolling') {
+      setRequestingFor('myself');
+      setStep(2);
+    } else if (selected === 'organization') {
+      setRequestingFor('organization');
+      setStep(2);
+    } else if (selected === 'support') {
+      setStep(2);
+    }
+  };
+
   const handleNext = () => {
-    if (step === 1) {
-      if (substep === 'main' && intent) {
-        if (intent === 'exploring') {
-          setSubstep('secondary');
-        } else if (intent === 'enrolling') {
-          setRequestingFor('myself');
-          setStep(2);
-        } else if (intent === 'organization') {
-          setRequestingFor('organization');
-          setStep(2);
-        } else if (intent === 'support') {
-          setStep(2);
-        }
-      } else if (substep === 'secondary' && requestingFor) {
-        setStep(2);
-      }
+    if (step === 1 && substep === 'secondary' && requestingFor) {
+      setStep(2);
     } else if (step === 2) {
       handleSubmit();
     }
@@ -572,7 +573,7 @@ export default function App() {
                   label="I'm Exploring Courses"
                   subtext="Interested in CPA, CMA, CIA, EA, CPE, or CFP"
                   selected={intent === 'exploring'}
-                  onClick={() => setIntent('exploring')}
+                  onClick={() => selectIntent('exploring')}
                   index={0}
                 />
                 <IntentTile
@@ -580,7 +581,7 @@ export default function App() {
                   label="I'm Ready to Enroll"
                   subtext="I know what I want and need to get started"
                   selected={intent === 'enrolling'}
-                  onClick={() => setIntent('enrolling')}
+                  onClick={() => selectIntent('enrolling')}
                   index={1}
                 />
                 <IntentTile
@@ -588,7 +589,7 @@ export default function App() {
                   label="I'm Buying for My Organization"
                   subtext="Firm, corporation, university, or government"
                   selected={intent === 'organization'}
-                  onClick={() => setIntent('organization')}
+                  onClick={() => selectIntent('organization')}
                   index={2}
                 />
                 <IntentTile
@@ -596,29 +597,10 @@ export default function App() {
                   label="I Need Student Support"
                   subtext="I'm already enrolled and need help"
                   selected={intent === 'support'}
-                  onClick={() => setIntent('support')}
+                  onClick={() => selectIntent('support')}
                   index={3}
                 />
               </div>
-
-              <motion.button
-                onClick={handleNext}
-                disabled={!intent}
-                className="w-full py-4 flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontWeight: 'var(--font-weight-bold)',
-                  backgroundColor: 'var(--becker-game-changer-yellow)',
-                  color: 'var(--becker-collegiate-blue)',
-                  borderRadius: '10px',
-                  border: 'none',
-                }}
-                whileHover={intent ? { scale: 1.02 } : {}}
-                whileTap={intent ? { scale: 0.98 } : {}}
-              >
-                Continue
-                <ArrowRight size={20} />
-              </motion.button>
 
               <motion.div
                 className="mt-8 pt-8"
