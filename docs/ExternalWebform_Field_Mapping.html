@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExternalWebform__c — Field Mapping for RFI Form</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 14px; color: #222; max-width: 1100px; margin: 40px auto; padding: 0 24px; }
+  h1 { color: #122048; font-size: 22px; margin-bottom: 4px; }
+  h2 { color: #122048; font-size: 16px; margin-top: 36px; margin-bottom: 8px; border-bottom: 2px solid #FDC20D; padding-bottom: 6px; }
+  p.subtitle { color: #666; font-size: 13px; margin-top: 0; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+  th { background-color: #122048; color: #fff; text-align: left; padding: 8px 10px; }
+  td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  tr:nth-child(even) { background-color: #f9fafb; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+  .exists { background: #d1fae5; color: #065f46; }
+  .confirm { background: #fef3c7; color: #92400e; }
+  .create { background: #fee2e2; color: #991b1b; }
+  .flag { background: #ede9fe; color: #5b21b6; }
+  .section-header td { background-color: #f0f4ff; font-weight: bold; color: #122048; font-size: 13px; letter-spacing: 0.03em; }
+  .note { background: #fffbeb; border-left: 4px solid #FDC20D; padding: 12px 16px; margin-top: 24px; border-radius: 4px; font-size: 13px; }
+  .note strong { color: #122048; }
+</style>
+</head>
+<body>
+
+<h1>ExternalWebform__c — Field Mapping for RFI Form</h1>
+<p class="subtitle">Prepared by Sam Chaudhary · Becker RFI Agent · 2026-04-17 · <a href="https://github.com/samcolibri/becker-rfi-agent">github.com/samcolibri/becker-rfi-agent</a></p>
+
+<!-- SECTION 1 -->
+<h2>Section 1 — Existing Fields We Use (No Changes Needed)</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Form Field</th>
+      <th>SF API Name</th>
+      <th>SF Type</th>
+      <th>Status</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>First Name</td><td>First_Name__c</td><td>Text(40)</td><td><span class="badge exists">EXISTS</span></td><td></td></tr>
+    <tr><td>Last Name</td><td>Last_Name__c</td><td>Text(80)</td><td><span class="badge exists">EXISTS</span></td><td></td></tr>
+    <tr><td>Email</td><td>Email__c</td><td>Email</td><td><span class="badge exists">EXISTS</span></td><td>Used by Flow for dedup logic</td></tr>
+    <tr><td>Phone</td><td>Phone__c</td><td>Phone</td><td><span class="badge exists">EXISTS</span></td><td></td></tr>
+    <tr><td>Organization Name</td><td>Company__c</td><td>Text(255)</td><td><span class="badge exists">EXISTS</span></td><td></td></tr>
+    <tr><td>Product Interest</td><td>Primary_Interest__c</td><td>Picklist</td><td><span class="badge confirm">CONFIRM VALUES</span></td><td>Need: Certified Public Accountant · Certified Management Accountant · Certified Internal Auditor · Enrolled Agent · Continuing Professional Education · Certified Financial Planner · Staff Level Training · CIA Challenge Exam</td></tr>
+    <tr><td>HQ State / Residence State</td><td>Address__c</td><td>Address</td><td><span class="badge exists">EXISTS</span></td><td>Use State sub-field</td></tr>
+    <tr><td>Becker Student Email</td><td>email_address_you_use_to_login_to_Becker__c</td><td>Text(255)</td><td><span class="badge exists">EXISTS</span></td><td>Conditional — shown only if "Are you a current Becker student?" = Yes</td></tr>
+    <tr><td>Graduation / Year in School</td><td>YearInSchool__c</td><td>Picklist</td><td><span class="badge confirm">CONFIRM VALUES</span></td><td>Need: 2025 · 2026 · 2027 · 2028 · 2029 · 2030 · Already Passed</td></tr>
+    <tr><td>Brand</td><td>BusinessBrand__c</td><td>Text(255)</td><td><span class="badge exists">EXISTS</span></td><td>Always set to: Becker Professional Education Corporation</td></tr>
+    <tr><td>Campaign</td><td>Campaign__c</td><td>Lookup(Campaign)</td><td><span class="badge exists">EXISTS</span></td><td>Nick Leavitt to provide Campaign ID per program/intent combination</td></tr>
+    <tr><td>Lead Source</td><td>Lead_Source_Form__c</td><td>Picklist</td><td><span class="badge confirm">CONFIRM VALUES</span></td><td>Need value: Web - Contact Us Form</td></tr>
+    <tr><td>Submission Timestamp</td><td>Lead_Source_Form_Date__c</td><td>Date/Time</td><td><span class="badge exists">EXISTS</span></td><td>System-set on submission</td></tr>
+    <tr><td>Marketing Consent</td><td>Consent_Provided__c</td><td>Picklist (Multi-Select)</td><td><span class="badge confirm">CONFIRM VALUES</span></td><td>Need value: Commercial Marketing</td></tr>
+    <tr><td>Consent Source</td><td>Consent_Captured_Source__c</td><td>Text(255)</td><td><span class="badge exists">EXISTS</span></td><td>Always set to: RFI Form — becker.com/contact-us</td></tr>
+    <tr><td>Privacy Consent</td><td>Privacy_Consent_Status__c</td><td>Picklist</td><td><span class="badge confirm">CONFIRM VALUES</span></td><td>Need value: Accepted</td></tr>
+  </tbody>
+</table>
+
+<!-- SECTION 2 -->
+<h2>Section 2 — New Fields Angel Needs to Create</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Field Label</th>
+      <th>SF API Name</th>
+      <th>SF Type</th>
+      <th>Status</th>
+      <th>Picklist Values / Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Intent Path</td><td>IntentPath__c</td><td>Picklist</td><td><span class="badge create">CREATE NEW</span></td><td>exploring · ready · b2b · support</td></tr>
+    <tr><td>Organization Type</td><td>OrganizationType__c</td><td>Picklist</td><td><span class="badge create">CREATE NEW</span></td><td>Accounting Firm · Corp/Healthcare/Bank/Financial Institution · Consulting Firm · CPA Alliance · Gov Agency/Not-for-Profit · Society/Chapter · Non-US Organization · Student · University · Other</td></tr>
+    <tr><td>Role Type</td><td>RoleType__c</td><td>Picklist</td><td><span class="badge create">CREATE NEW</span></td><td>Undergrad Student · Grad Student · Professor · Supervisor/Director/Manager · Partner/CEO/CFO · Administrator · Unemployed · Learning/Training Leader · Staff Accountant · Other</td></tr>
+    <tr><td>Organization Size</td><td>OrgSizeCategory__c</td><td>Picklist</td><td><span class="badge create">CREATE NEW</span></td><td>&lt;25 · 26-100 · 101-250 · 251+</td></tr>
+    <tr><td>Suggested Queue</td><td>SuggestedQueue__c</td><td>Text(100)</td><td><span class="badge create">CREATE NEW</span></td><td>No picklist — routing engine writes queue name here (e.g. "Global Firms") — Flow reads it to set OwnerId on the Lead or Opportunity</td></tr>
+    <tr><td>UTM / Lead Source Detail</td><td>LeadSourceDetail__c</td><td>Text(255)</td><td><span class="badge create">CREATE NEW</span></td><td>Stores UTM string e.g. utm_source=google&amp;utm_campaign=cpa2026</td></tr>
+  </tbody>
+</table>
+
+<!-- SECTION 3 -->
+<h2>Section 3 — Confirm Existing Picklist Values</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>API Name</th>
+      <th>Values That Must Exist</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Product Interest</td><td>Primary_Interest__c</td><td>Certified Public Accountant · Certified Management Accountant · Certified Internal Auditor · Enrolled Agent · Continuing Professional Education · Certified Financial Planner · Staff Level Training · CIA Challenge Exam</td><td><span class="badge confirm">CONFIRM</span></td></tr>
+    <tr><td>Marketing Consent</td><td>Consent_Provided__c</td><td>Commercial Marketing</td><td><span class="badge confirm">CONFIRM</span></td></tr>
+    <tr><td>Privacy Consent</td><td>Privacy_Consent_Status__c</td><td>Accepted</td><td><span class="badge confirm">CONFIRM</span></td></tr>
+    <tr><td>Lead Source</td><td>Lead_Source_Form__c</td><td>Web - Contact Us Form</td><td><span class="badge confirm">CONFIRM</span></td></tr>
+    <tr><td>Year in School</td><td>YearInSchool__c</td><td>2025 · 2026 · 2027 · 2028 · 2029 · 2030 · Already Passed</td><td><span class="badge confirm">CONFIRM</span></td></tr>
+  </tbody>
+</table>
+
+<!-- SECTION 4 -->
+<h2>Section 4 — Flag: Company Size Field</h2>
+<div class="note">
+  <strong>⚠ Do not use existing CompanySize__c for organization size ranges.</strong><br><br>
+  The existing <code>CompanySize__c</code> field is type <strong>Number(8,0)</strong> — it cannot store range values like "&lt;25" or "26-100".<br><br>
+  <strong>Recommendation:</strong> Create new <code>OrgSizeCategory__c</code> Picklist field (listed in Section 2 above) with values: &lt;25 · 26-100 · 101-250 · 251+
+</div>
+
+<!-- SUMMARY -->
+<h2>Summary — Total Ask for Angel</h2>
+<table>
+  <thead>
+    <tr><th>Action</th><th>Count</th><th>Details</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="badge create">CREATE NEW</span> fields on ExternalWebform__c</td><td>6</td><td>IntentPath__c · OrganizationType__c · RoleType__c · OrgSizeCategory__c · SuggestedQueue__c · LeadSourceDetail__c</td></tr>
+    <tr><td><span class="badge confirm">CONFIRM</span> existing picklist values</td><td>5 fields</td><td>Primary_Interest__c · Consent_Provided__c · Privacy_Consent_Status__c · Lead_Source_Form__c · YearInSchool__c</td></tr>
+    <tr><td><span class="badge exists">USE AS IS</span> existing fields</td><td>16</td><td>No changes needed</td></tr>
+  </tbody>
+</table>
+
+<p style="margin-top:40px; font-size:12px; color:#999;">Becker RFI Agent · Sam Chaudhary · 2026-04-17 · <a href="https://github.com/samcolibri/becker-rfi-agent">github.com/samcolibri/becker-rfi-agent</a></p>
+
+</body>
+</html>

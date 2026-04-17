@@ -1,0 +1,32 @@
+SECTION,Form Field,SF API Name,SF Field Type,Status,Picklist Values / Notes
+EXISTING - USE AS IS,First Name,First_Name__c,Text(40),EXISTS,
+EXISTING - USE AS IS,Last Name,Last_Name__c,Text(80),EXISTS,
+EXISTING - USE AS IS,Email,Email__c,Email,EXISTS,Used by Flow for dedup
+EXISTING - USE AS IS,Phone,Phone__c,Phone,EXISTS,
+EXISTING - USE AS IS,Organization Name,Company__c,Text(255),EXISTS,
+EXISTING - USE AS IS,Product Interest,Primary_Interest__c,Picklist,EXISTS - CONFIRM VALUES,"Need values: Certified Public Accountant · Certified Management Accountant · Certified Internal Auditor · Enrolled Agent · Continuing Professional Education · Certified Financial Planner · Staff Level Training · CIA Challenge Exam"
+EXISTING - USE AS IS,HQ State / Residence State,Address__c,Address,EXISTS,Use State sub-field
+EXISTING - USE AS IS,Becker Student Email,email_address_you_use_to_login_to_Becker__c,Text(255),EXISTS,Conditional — shown only if current Becker student = Yes
+EXISTING - USE AS IS,Graduation / Year in School,YearInSchool__c,Picklist,EXISTS - CONFIRM VALUES,Need values: 2025 · 2026 · 2027 · 2028 · 2029 · 2030 · Already Passed
+EXISTING - USE AS IS,Brand,BusinessBrand__c,Text(255),EXISTS,Always set to: Becker Professional Education Corporation
+EXISTING - USE AS IS,Campaign,Campaign__c,Lookup(Campaign),EXISTS,Nick Leavitt to provide Campaign ID per program/intent
+EXISTING - USE AS IS,Lead Source,Lead_Source_Form__c,Picklist,EXISTS - CONFIRM VALUES,Need value: Web - Contact Us Form
+EXISTING - USE AS IS,Submission Timestamp,Lead_Source_Form_Date__c,Date/Time,EXISTS,System-set on submission
+EXISTING - USE AS IS,Marketing Consent,Consent_Provided__c,Picklist (Multi-Select),EXISTS - CONFIRM VALUES,Need value: Commercial Marketing
+EXISTING - USE AS IS,Consent Source,Consent_Captured_Source__c,Text(255),EXISTS,Always set to: RFI Form — becker.com/contact-us
+EXISTING - USE AS IS,Privacy Consent,Privacy_Consent_Status__c,Picklist,EXISTS - CONFIRM VALUES,Need value: Accepted
+,,,,
+NEW - ANGEL TO CREATE,Intent Path,IntentPath__c,Picklist,CREATE NEW,"exploring · ready · b2b · support"
+NEW - ANGEL TO CREATE,Organization Type,OrganizationType__c,Picklist,CREATE NEW,"Accounting Firm · Corp/Healthcare/Bank/Financial Institution · Consulting Firm · CPA Alliance · Gov Agency/Not-for-Profit · Society/Chapter · Non-US Organization · Student · University · Other"
+NEW - ANGEL TO CREATE,Role Type,RoleType__c,Picklist,CREATE NEW,"Undergrad Student · Grad Student · Professor · Supervisor/Director/Manager · Partner/CEO/CFO · Administrator · Unemployed · Learning/Training Leader · Staff Accountant · Other"
+NEW - ANGEL TO CREATE,Organization Size,OrgSizeCategory__c,Picklist,CREATE NEW,"<25 · 26-100 · 101-250 · 251+"
+NEW - ANGEL TO CREATE,Suggested Queue,SuggestedQueue__c,Text(100),CREATE NEW,No picklist — routing engine writes queue name here — Flow reads it to set OwnerId
+NEW - ANGEL TO CREATE,UTM / Lead Source Detail,LeadSourceDetail__c,Text(255),CREATE NEW,Stores raw UTM string e.g. utm_source=google&utm_campaign=cpa
+,,,,
+CONFIRM EXISTING PICKLIST VALUES,Primary_Interest__c — confirm these values exist,,,CONFIRM,"Certified Public Accountant · Certified Management Accountant · Certified Internal Auditor · Enrolled Agent · Continuing Professional Education · Certified Financial Planner · Staff Level Training · CIA Challenge Exam"
+CONFIRM EXISTING PICKLIST VALUES,Consent_Provided__c — confirm this value exists,,,CONFIRM,Commercial Marketing
+CONFIRM EXISTING PICKLIST VALUES,Privacy_Consent_Status__c — confirm this value exists,,,CONFIRM,Accepted
+CONFIRM EXISTING PICKLIST VALUES,Lead_Source_Form__c — confirm this value exists,,,CONFIRM,Web - Contact Us Form
+CONFIRM EXISTING PICKLIST VALUES,YearInSchool__c — confirm these values exist,,,CONFIRM,"2025 · 2026 · 2027 · 2028 · 2029 · 2030 · Already Passed"
+,,,,
+FLAG - COMPANY SIZE,Existing CompanySize__c is Number(8-0) — cannot store less-than-25 or range values,,,ACTION NEEDED,"Recommend: create new OrgSizeCategory__c picklist (above). Do NOT use existing CompanySize__c for this."
