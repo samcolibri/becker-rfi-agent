@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Becker RFI Agent — Project Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh}
+a{color:inherit;text-decoration:none}
+
+/* Header */
+.header{background:linear-gradient(135deg,#c41e3a 0%,#7f0e1e 100%);color:#fff;padding:32px 48px 28px}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px}
+.header h1{font-size:24px;font-weight:700;letter-spacing:-0.3px}
+.header .sub{opacity:.8;font-size:14px;margin-top:4px}
+.header-links{display:flex;gap:10px;flex-wrap:wrap}
+.hlink{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:500;transition:.15s;cursor:pointer}
+.hlink:hover{background:rgba(255,255,255,.25)}
+.badges{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse 1.5s infinite}
+.badge.warn .dot{background:#fbbf24}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Progress */
+.progress-bar-wrap{margin-top:20px}
+.progress-label{display:flex;justify-content:space-between;font-size:13px;opacity:.85;margin-bottom:6px}
+.progress-track{background:rgba(255,255,255,.2);border-radius:99px;height:10px;overflow:hidden}
+.progress-fill{background:linear-gradient(90deg,#4ade80,#22d3ee);border-radius:99px;height:100%;transition:width .8s ease}
+
+/* Layout */
+.body{padding:28px 48px;display:grid;gap:24px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px}
+@media(max-width:900px){.row2,.row3{grid-template-columns:1fr}}
+
+/* Cards */
+.card{background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 4px 12px rgba(0,0,0,.04);overflow:hidden}
+.card-header{padding:18px 22px 0;display:flex;justify-content:space-between;align-items:center}
+.card-title{font-size:14px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.04em}
+.card-count{background:#f1f5f9;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600;color:#64748b}
+.card-body{padding:18px 22px 22px}
+
+/* Stat row */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:24px 48px 0}
+@media(max-width:900px){.stat-row{grid-template-columns:1fr 1fr}}
+.stat{background:#fff;border-radius:14px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.stat .num{font-size:36px;font-weight:800;color:#c41e3a;line-height:1}
+.stat .lbl{font-size:12px;color:#64748b;margin-top:6px;font-weight:500}
+.stat .sub{font-size:11px;color:#94a3b8;margin-top:2px}
+
+/* Blockers */
+.blocker{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:14px 0;border-bottom:1px solid #f1f5f9}
+.blocker:last-child{border-bottom:none;padding-bottom:0}
+.blocker:first-child{padding-top:0}
+.priority-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap;margin-top:1px}
+.P0{background:#fef2f2;color:#dc2626}
+.P1{background:#fff7ed;color:#d97706}
+.P2{background:#fefce8;color:#ca8a04}
+.blocker-title{font-size:13px;font-weight:600;color:#1e293b}
+.blocker-detail{font-size:12px;color:#64748b;margin-top:3px;line-height:1.5}
+.status-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.status-blocked{background:#fef2f2;color:#dc2626}
+.status-waiting{background:#fff7ed;color:#d97706}
+.status-partial{background:#fefce8;color:#ca8a04}
+.status-done{background:#f0fdf4;color:#16a34a}
+.status-planned{background:#f8fafc;color:#64748b}
+
+/* Fields */
+.field-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.field-pill{border-radius:8px;padding:9px 13px;display:flex;justify-content:space-between;align-items:center;font-size:12px;border:1px solid transparent}
+.field-ok{background:#f0fdf4;border-color:#bbf7d0}
+.field-ok .fname{color:#15803d;font-family:monospace;font-size:11px}
+.field-ok .fmark{color:#16a34a;font-weight:700}
+.field-miss{background:#fef2f2;border-color:#fecaca}
+.field-miss .fname{color:#dc2626;font-family:monospace;font-size:11px}
+.field-miss .fmark{color:#dc2626;font-weight:700}
+.field-type{font-size:10px;color:#94a3b8;background:#f1f5f9;padding:2px 7px;border-radius:10px}
+
+/* Decisions */
+.decision{padding:12px 0;border-bottom:1px solid #f1f5f9}
+.decision:first-child{padding-top:0}
+.decision:last-child{border-bottom:none;padding-bottom:0}
+.decision-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.decision-title{font-size:13px;font-weight:600;color:#1e293b}
+.decision-detail{font-size:12px;color:#64748b;line-height:1.5}
+.d-confirmed{color:#16a34a;font-size:16px}
+.d-pending{color:#d97706;font-size:16px}
+
+/* Campaigns */
+.campaign-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f8fafc;font-size:13px}
+.campaign-row:last-child{border-bottom:none}
+.campaign-product{font-weight:500;color:#1e293b}
+.campaign-path{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;margin-left:8px}
+.path-b2c{background:#eff6ff;color:#2563eb}
+.path-b2b{background:#f0fdf4;color:#15803d}
+.path-support{background:#f8fafc;color:#64748b}
+.campaign-id{font-family:monospace;font-size:11px;color:#6366f1;background:#eef2ff;padding:3px 8px;border-radius:6px}
+.null-id{color:#94a3b8;font-style:italic}
+
+/* Next steps */
+.step{display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:start;padding:11px 0;border-bottom:1px solid #f8fafc}
+.step:last-child{border-bottom:none}
+.step-num{width:28px;height:28px;border-radius:50%;background:#f1f5f9;color:#64748b;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-action{font-size:13px;font-weight:500;color:#1e293b}
+.step-unblocks{font-size:11px;color:#64748b;margin-top:2px}
+.step-owner{font-size:11px;color:#6366f1;white-space:nowrap;background:#eef2ff;padding:2px 8px;border-radius:10px;font-weight:600;flex-shrink:0}
+
+/* Stakeholders */
+.stakeholder{display:flex;justify-content:space-between;align-items:flex-start;padding:11px 0;border-bottom:1px solid #f8fafc;gap:12px}
+.stakeholder:first-child{padding-top:0}
+.stakeholder:last-child{border-bottom:none;padding-bottom:0}
+.s-info .s-name{font-size:13px;font-weight:600;color:#1e293b}
+.s-info .s-role{font-size:11px;color:#64748b}
+.s-info .s-items{font-size:12px;color:#475569;margin-top:3px}
+
+/* SF Live table */
+.sf-table{width:100%;border-collapse:collapse;font-size:12px}
+.sf-table th{background:#f8fafc;padding:9px 12px;text-align:left;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:11px}
+.sf-table td{padding:9px 12px;border-top:1px solid #f1f5f9;color:#374151}
+.sf-table tr:hover td{background:#fafafa}
+.id-mono{font-family:monospace;font-size:10px;color:#6366f1;background:#eef2ff;padding:2px 6px;border-radius:4px}
+
+/* Queue pills */
+.queue-wrap{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+.queue-pill{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 11px;font-size:12px;color:#475569}
+
+/* Footer */
+.footer{text-align:center;padding:28px 48px;font-size:12px;color:#94a3b8}
+
+/* Loading state */
+#loading{text-align:center;padding:80px;color:#64748b;font-size:15px}
+#dashboard{display:none}
+</style>
+</head>
+<body>
+
+<div id="loading">Loading live data...</div>
+
+<div id="dashboard">
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>Becker RFI Agent — Project Dashboard</h1>
+      <div class="sub">3-step smart form + SF routing engine · replacing manual lead routing at Becker</div>
+    </div>
+    <div class="header-links">
+      <a class="hlink" href="https://github.com/samcolibri/becker-rfi-agent" target="_blank">GitHub Repo</a>
+      <a class="hlink" href="https://github.com/samcolibri/becker-rfi-agent/blob/main/ARCHITECTURE.md" target="_blank">Architecture Doc</a>
+      <a class="hlink" href="https://github.com/samcolibri/becker-rfi-agent/blob/main/SETUP.md" target="_blank">Setup Guide</a>
+    </div>
+  </div>
+  <div class="badges">
+    <div class="badge"><span class="dot"></span> SF CONNECTED · bpedevf sandbox</div>
+    <div class="badge warn"><span class="dot" style="background:#fbbf24"></span> 7 FIELDS PENDING · Angel Cichy</div>
+    <div class="badge"><span class="dot" style="background:#60a5fa"></span> CODE COMPLETE · Railway Ready</div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-label"><span>Build Progress</span><span id="progress-pct">85%</span></div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+</div>
+
+<div class="stat-row" id="stat-row"></div>
+
+<div class="body">
+
+  <!-- Blockers + Decisions -->
+  <div class="row2">
+    <div class="card">
+      <div class="card-header"><span class="card-title">🚧 What's Blocking</span><span class="card-count" id="blocker-count"></span></div>
+      <div class="card-body" id="blockers-body"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">✅ Architecture Decisions</span><span class="card-count" id="decision-count"></span></div>
+      <div class="card-body" id="decisions-body"></div>
+    </div>
+  </div>
+
+  <!-- Fields -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">🔧 ExternalWebform__c Field Status</span><span class="card-count" id="field-count"></span></div>
+    <div class="card-body">
+      <p style="font-size:12px;color:#64748b;margin-bottom:14px">Verified live against Becker SF sandbox. Green = exists today. Red = Angel must create before launch.</p>
+      <div class="field-grid" id="fields-body"></div>
+    </div>
+  </div>
+
+  <!-- Next Steps + Stakeholders -->
+  <div class="row2">
+    <div class="card">
+      <div class="card-header"><span class="card-title">📋 Next Steps to Go Live</span></div>
+      <div class="card-body" id="steps-body"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">👥 Stakeholders</span></div>
+      <div class="card-body" id="stakeholders-body"></div>
+    </div>
+  </div>
+
+  <!-- Campaigns + SF Live -->
+  <div class="row2">
+    <div class="card">
+      <div class="card-header"><span class="card-title">📣 Campaign Mapping</span><span class="card-count">Confirmed</span></div>
+      <div class="card-body" id="campaigns-body"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">⚡ SF Live Submissions</span><span class="card-count" id="recent-count"></span></div>
+      <div class="card-body" id="recent-body"></div>
+    </div>
+  </div>
+
+  <!-- Queues -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">🎯 SF Queues in Sandbox</span><span class="card-count" id="queue-count"></span></div>
+    <div class="card-body"><div class="queue-wrap" id="queues-body"></div></div>
+  </div>
+
+</div>
+
+<div class="footer" id="footer"></div>
+
+</div><!-- #dashboard -->
+
+<script>
+const STATUS_LABELS = {
+  blocked: '<span class="status-badge status-blocked">Blocked</span>',
+  waiting: '<span class="status-badge status-waiting">Waiting</span>',
+  partial: '<span class="status-badge status-partial">Partial ✓</span>',
+  done:    '<span class="status-badge status-done">Done ✓</span>',
+  planned: '<span class="status-badge status-planned">Planned</span>',
+};
+
+function fmt(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+fetch('data.json?v=' + Date.now())
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+
+    // Progress
+    document.getElementById('progress-pct').textContent = d.progress + '%';
+    setTimeout(() => document.getElementById('progress-fill').style.width = d.progress + '%', 50);
+
+    // Stats
+    document.getElementById('stat-row').innerHTML = `
+      <div class="stat"><div class="num">${d.sf.wfCount.toLocaleString()}</div><div class="lbl">ExternalWebform Records</div><div class="sub">in SF sandbox</div></div>
+      <div class="stat"><div class="num">${d.sf.leadsThisYear}</div><div class="lbl">Leads This Year</div><div class="sub">sandbox (bpedevf)</div></div>
+      <div class="stat"><div class="num">${d.blockers.filter(b=>b.status==='blocked').length}</div><div class="lbl">Active Blockers</div><div class="sub">all external</div></div>
+      <div class="stat"><div class="num">${d.progress}%</div><div class="lbl">Build Complete</div><div class="sub">code is prod-ready</div></div>
+    `;
+
+    // Blockers
+    document.getElementById('blocker-count').textContent = d.blockers.length + ' items';
+    document.getElementById('blockers-body').innerHTML = d.blockers.map(b => `
+      <div class="blocker">
+        <span class="priority-badge ${b.priority}">${b.priority}</span>
+        <div>
+          <div class="blocker-title">${b.title}</div>
+          <div class="blocker-detail">${b.detail}</div>
+          <div class="blocker-detail" style="margin-top:3px;color:#94a3b8">Owner: <strong>${b.owner}</strong></div>
+        </div>
+        ${STATUS_LABELS[b.status] || ''}
+      </div>
+    `).join('');
+
+    // Decisions
+    document.getElementById('decision-count').textContent = d.decisions.filter(x=>x.status==='confirmed').length + ' confirmed';
+    document.getElementById('decisions-body').innerHTML = d.decisions.map(dec => `
+      <div class="decision">
+        <div class="decision-head">
+          <span class="${dec.status === 'confirmed' ? 'd-confirmed' : 'd-pending'}">${dec.status === 'confirmed' ? '✓' : '◷'}</span>
+          <span class="decision-title">${dec.title}</span>
+        </div>
+        <div class="decision-detail">${dec.detail}</div>
+      </div>
+    `).join('');
+
+    // Fields
+    const allFields = [
+      ...d.fields.confirmed.map(f => ({ name: f.name, exists: f.exists, type: 'existing' })),
+      ...d.fields.newRequired.map(f => ({ name: f.name, exists: f.exists, type: f.type, values: f.values })),
+    ];
+    document.getElementById('field-count').textContent = `${d.fields.confirmed.length} confirmed · ${d.fields.newRequired.filter(f=>!f.exists).length} missing`;
+    document.getElementById('fields-body').innerHTML = allFields.map(f => `
+      <div class="field-pill ${f.exists ? 'field-ok' : 'field-miss'}">
+        <span class="fname">${f.name}</span>
+        ${f.exists ? '<span class="fmark">✓</span>' : '<span class="fmark">✗ needed</span>'}
+      </div>
+    `).join('');
+
+    // Next steps
+    document.getElementById('steps-body').innerHTML = d.nextSteps.map(s => `
+      <div class="step">
+        <div class="step-num">${s.step}</div>
+        <div>
+          <div class="step-action">${s.action}</div>
+          <div class="step-unblocks">Unblocks: ${s.unblocks}</div>
+        </div>
+        <div class="step-owner">${s.owner.split(' ')[0]}</div>
+      </div>
+    `).join('');
+
+    // Stakeholders
+    document.getElementById('stakeholders-body').innerHTML = d.stakeholders.map(s => `
+      <div class="stakeholder">
+        <div class="s-info">
+          <div class="s-name">${s.name}</div>
+          <div class="s-role">${s.role}</div>
+          <div class="s-items">${s.items}</div>
+        </div>
+        ${STATUS_LABELS[s.status] || ''}
+      </div>
+    `).join('');
+
+    // Campaigns
+    document.getElementById('campaigns-body').innerHTML = d.campaigns.map(c => `
+      <div class="campaign-row">
+        <div>
+          <span class="campaign-product">${c.product}</span>
+          <span class="campaign-path path-${c.path.toLowerCase()}">${c.path}</span>
+        </div>
+        ${c.id ? `<span class="campaign-id">${c.id}</span>` : '<span class="null-id">no campaign</span>'}
+      </div>
+    `).join('');
+
+    // Recent SF submissions
+    document.getElementById('recent-count').textContent = 'live from SF';
+    document.getElementById('recent-body').innerHTML = `
+      <table class="sf-table">
+        <thead><tr><th>Name</th><th>Source</th><th>SF ID</th><th>Date</th></tr></thead>
+        <tbody>${d.sf.recentForms.map(f => `
+          <tr>
+            <td>${f.name || '—'}<br><span style="color:#94a3b8;font-size:11px">${f.email}</span></td>
+            <td style="color:#64748b;font-size:12px">${f.source || '—'}</td>
+            <td><span class="id-mono">${f.id}</span></td>
+            <td style="color:#94a3b8;font-size:11px">${fmt(f.date)}</td>
+          </tr>
+        `).join('')}</tbody>
+      </table>`;
+
+    // Queues
+    document.getElementById('queue-count').textContent = d.sf.queues.length + ' found';
+    document.getElementById('queues-body').innerHTML = d.sf.queues.map(q => `<div class="queue-pill">${q.name}</div>`).join('');
+
+    // Footer
+    document.getElementById('footer').innerHTML = `
+      Last updated: ${new Date(d.generated).toLocaleString()} &nbsp;·&nbsp;
+      <a href="https://github.com/samcolibri/becker-rfi-agent" style="color:#6366f1">github.com/samcolibri/becker-rfi-agent</a> &nbsp;·&nbsp;
+      SF: ${d.sf.org} · ${d.sf.sandbox} &nbsp;·&nbsp;
+      Run <code style="background:#f1f5f9;padding:1px 6px;border-radius:4px;font-size:11px">node scripts/update-dashboard.js --push</code> to refresh
+    `;
+  })
+  .catch(e => {
+    document.getElementById('loading').innerHTML = `<p style="color:#dc2626">Error loading data.json: ${e.message}</p>`;
+  });
+</script>
+</body>
+</html>

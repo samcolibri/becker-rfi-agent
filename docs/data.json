@@ -1,0 +1,629 @@
+{
+  "generated": "2026-04-17T22:15:49.349Z",
+  "progress": 85,
+  "sf": {
+    "connected": true,
+    "org": "Becker Professional Education",
+    "sandbox": "bpedevf",
+    "instanceUrl": "https://becker--bpedevf.sandbox.my.salesforce.com",
+    "apiVersion": "v59.0",
+    "wfCount": 7185,
+    "leadsThisYear": 76,
+    "recentForms": [
+      {
+        "id": "a7IU7000004RaBZMA0",
+        "name": "Test test",
+        "email": "usertestigor+dev22@gmail.com",
+        "source": "CPA Demo form",
+        "date": "2026-04-17T15:04:16.000+0000"
+      },
+      {
+        "id": "a7IU7000004Q5zRMAS",
+        "name": "Elena Paskaleva",
+        "email": "paskalevae@gmail.com",
+        "source": "CIA Exam Review Demo",
+        "date": "2026-04-15T12:06:15.000+0000"
+      },
+      {
+        "id": "a7IU7000004O3AXMA0",
+        "name": "Ronaldo Da Silva Lima",
+        "email": "ronaldoslima21@gmail.com",
+        "source": "CIA Practice Questions",
+        "date": "2026-04-09T11:58:58.000+0000"
+      },
+      {
+        "id": "a7IU7000004JI3lMAG",
+        "name": "William Jansen",
+        "email": "heino@kisting.com",
+        "source": "CIA Exam Review Demo",
+        "date": "2026-03-31T15:26:22.000+0000"
+      },
+      {
+        "id": "a7IU7000004InrBMAS",
+        "name": "Test CDM Logic",
+        "email": "testcdmlogic@mailinator.com",
+        "source": null,
+        "date": "2026-03-31T00:47:15.000+0000"
+      },
+      {
+        "id": "a7IU7000004HYXdMAO",
+        "name": "MAI ABDELKADER",
+        "email": "maiabdelqader@icloud.com",
+        "source": "CIA Exam Review Demo",
+        "date": "2026-03-29T11:26:45.000+0000"
+      },
+      {
+        "id": "a7IU7000004FuSbMAK",
+        "name": "Test test",
+        "email": "usertestigor+ciademo02@gmail.com",
+        "source": "CIA Exam Review Demo",
+        "date": "2026-03-27T01:25:16.000+0000"
+      },
+      {
+        "id": "a7IU7000004FuNlMAK",
+        "name": "Test test",
+        "email": "usertestigor+ciademo02@gmail.com",
+        "source": "CIA Exam Review Demo",
+        "date": "2026-03-27T01:11:35.000+0000"
+      }
+    ],
+    "queues": [
+      {
+        "id": "00G3r000005ZCpQEAW",
+        "name": "Additional Service Tracking"
+      },
+      {
+        "id": "00GU7000003PBjJMAW",
+        "name": "Becker India Operations"
+      },
+      {
+        "id": "00G3r0000053S4bEAE",
+        "name": "Becker Tuition Advantage"
+      },
+      {
+        "id": "00GU70000027pCjMAI",
+        "name": "BeckerKB - AUD Evolution"
+      },
+      {
+        "id": "00Gi0000002CIZeEAO",
+        "name": "BeckerKB-Audit"
+      },
+      {
+        "id": "00GVH0000075ynV2AQ",
+        "name": "BeckerKB-BeckerAcademy"
+      },
+      {
+        "id": "00Gi0000002CIZfEAO",
+        "name": "BeckerKB-Business"
+      },
+      {
+        "id": "00GU7000002NzcjMAC",
+        "name": "BeckerKB-CIA"
+      },
+      {
+        "id": "00GVH0000075ynW2AQ",
+        "name": "BeckerKB-EnrolledAgent"
+      },
+      {
+        "id": "00Gi0000002CIZgEAO",
+        "name": "BeckerKB-Financial"
+      },
+      {
+        "id": "00G5x000006qiWpEAI",
+        "name": "BeckerKB-ISC"
+      },
+      {
+        "id": "00Gi0000002CIZiEAO",
+        "name": "BeckerKB-Regulation"
+      },
+      {
+        "id": "00G5x000006qiWqEAI",
+        "name": "BeckerKB-TCP"
+      },
+      {
+        "id": "00GU7000005cJd3MAE",
+        "name": "Business Operations"
+      },
+      {
+        "id": "00Gi0000002CIZuEAO",
+        "name": "Campus Ambassador Program"
+      },
+      {
+        "id": "00Gi0000002CIZvEAO",
+        "name": "Catchall"
+      },
+      {
+        "id": "00G3100000468uaEAA",
+        "name": "CMA Academic Support"
+      },
+      {
+        "id": "00G3100000468ufEAA",
+        "name": "CMA Customer and Technical Support"
+      },
+      {
+        "id": "00Gi0000002CIZxEAO",
+        "name": "Complimentary Materials Requests"
+      },
+      {
+        "id": "00G3r000005Zld1EAC",
+        "name": "Contract Billing Tasks"
+      },
+      {
+        "id": "00Gi0000002CIZmEAO",
+        "name": "CRM Support"
+      },
+      {
+        "id": "00Gi0000002CIZnEAO",
+        "name": "CS - B2B Administration"
+      },
+      {
+        "id": "00Gi0000002CIZoEAO",
+        "name": "CS - Billing and Receivables"
+      },
+      {
+        "id": "00G3r000005Zmb8EAC",
+        "name": "CS - Concierge"
+      },
+      {
+        "id": "00Gi0000002CIZqEAO",
+        "name": "CS - Contact Center Inbound"
+      },
+      {
+        "id": "00Gi0000002CIZsEAO",
+        "name": "CS - Ecommerce Operations Administration"
+      },
+      {
+        "id": "00G3r000005Z3dLEAS",
+        "name": "CS - Inside Sales"
+      },
+      {
+        "id": "00Gi0000002CIZtEAO",
+        "name": "CS - International Students"
+      },
+      {
+        "id": "00G3r000005lt4EEAQ",
+        "name": "CS - Pass Guarantee"
+      },
+      {
+        "id": "00G3r000005lu1lEAA",
+        "name": "CS - Unlimited License Extension"
+      },
+      {
+        "id": "00G3r000005QFyTEAW",
+        "name": "Customer Service Leadership"
+      },
+      {
+        "id": "00G0Z000004PcZlUAK",
+        "name": "Direct Bill Invoicing"
+      },
+      {
+        "id": "00Gi0000002CIZyEAO",
+        "name": "DKB (DeVry/Keller/Becker)"
+      },
+      {
+        "id": "00G0Z000005IHpGUAW",
+        "name": "Escalation"
+      },
+      {
+        "id": "00G31000004Wa5IEAS",
+        "name": "ExamReviewLOL"
+      },
+      {
+        "id": "00Gi0000002CIZzEAO",
+        "name": "Field Lead Processing"
+      },
+      {
+        "id": "00Gi0000002CIa1EAG",
+        "name": "Field Sales Operations"
+      },
+      {
+        "id": "00Gi0000002CIa3EAG",
+        "name": "Healthcare (USMLE and COMLEX)"
+      },
+      {
+        "id": "00GU7000003SKOfMAO",
+        "name": "Inside Sales - B2B"
+      },
+      {
+        "id": "00Gi0000002CIa4EAG",
+        "name": "Instruction"
+      },
+      {
+        "id": "00Gi0000002CIa5EAG",
+        "name": "International Partner"
+      },
+      {
+        "id": "00G3r0000053S4gEAE",
+        "name": "International Transcript Evaluation"
+      },
+      {
+        "id": "00G3r000005lfqQEAQ",
+        "name": "INTL Orders"
+      },
+      {
+        "id": "00G3r000005llS8EAI",
+        "name": "IS Corporate Queue"
+      },
+      {
+        "id": "00G3r000005llS7EAI",
+        "name": "IS Corporate Queue_"
+      },
+      {
+        "id": "00G3r000005llS9EAI",
+        "name": "IS Government Queue"
+      },
+      {
+        "id": "00G3r000005llSAEAY",
+        "name": "IS Non - US Corporate Queue"
+      },
+      {
+        "id": "00G3r000005llSBEAY",
+        "name": "IS University Central Region"
+      },
+      {
+        "id": "00G3r000005llSCEAY",
+        "name": "IS University East Region"
+      },
+      {
+        "id": "00G3r000005llSDEAY",
+        "name": "IS University West Region"
+      }
+    ]
+  },
+  "fields": {
+    "confirmed": [
+      {
+        "name": "Email__c",
+        "exists": true
+      },
+      {
+        "name": "First_Name__c",
+        "exists": true
+      },
+      {
+        "name": "Last_Name__c",
+        "exists": true
+      },
+      {
+        "name": "Phone__c",
+        "exists": true
+      },
+      {
+        "name": "Company__c",
+        "exists": true
+      },
+      {
+        "name": "Primary_Interest__c",
+        "exists": true
+      },
+      {
+        "name": "Address__StateCode__s",
+        "exists": true
+      },
+      {
+        "name": "YearInSchool__c",
+        "exists": true
+      },
+      {
+        "name": "Campaign__c",
+        "exists": true
+      },
+      {
+        "name": "Consent_Provided__c",
+        "exists": true
+      },
+      {
+        "name": "Privacy_Consent_Status__c",
+        "exists": true
+      },
+      {
+        "name": "Lead_Source_Form__c",
+        "exists": true
+      },
+      {
+        "name": "Lead_Source_Form_Date__c",
+        "exists": true
+      },
+      {
+        "name": "BusinessBrand__c",
+        "exists": true
+      },
+      {
+        "name": "If_other__c",
+        "exists": true
+      },
+      {
+        "name": "email_address_you_use_to_login_to_Becker__c",
+        "exists": true
+      },
+      {
+        "name": "Consent_Captured_Source__c",
+        "exists": true
+      }
+    ],
+    "newRequired": [
+      {
+        "name": "IntentPath__c",
+        "type": "Picklist",
+        "values": "exploring · ready · b2b · support",
+        "exists": false
+      },
+      {
+        "name": "OrganizationType__c",
+        "type": "Picklist",
+        "values": "Accounting Firm · Corp/Healthcare/Bank · Consulting Firm · CPA Alliance · Gov/NFP · Society/Chapter · Non-US · Student · University · Other",
+        "exists": false
+      },
+      {
+        "name": "RoleType__c",
+        "type": "Picklist",
+        "values": "Undergrad Student · Grad Student · Professor · Supervisor/Director/Manager · Partner/CEO/CFO · Administrator · Unemployed · Learning/Training Leader · Staff Accountant · Other",
+        "exists": false
+      },
+      {
+        "name": "OrgSizeCategory__c",
+        "type": "Picklist",
+        "values": "<25 · 26-100 · 101-250 · 251+",
+        "exists": false
+      },
+      {
+        "name": "SuggestedQueue__c",
+        "type": "Text(100)",
+        "values": "Free text — routing engine output",
+        "exists": false
+      },
+      {
+        "name": "LeadSourceDetail__c",
+        "type": "Text(255)",
+        "values": "UTM params string",
+        "exists": false
+      },
+      {
+        "name": "QueryType__c",
+        "type": "Picklist",
+        "values": "Sales Query · Support Query",
+        "exists": false
+      }
+    ]
+  },
+  "blockers": [
+    {
+      "id": "B1",
+      "priority": "P0",
+      "owner": "Angel Cichy",
+      "status": "blocked",
+      "title": "Create 7 new fields on ExternalWebform__c",
+      "detail": "IntentPath__c, OrganizationType__c, RoleType__c, OrgSizeCategory__c, SuggestedQueue__c, LeadSourceDetail__c, QueryType__c — all specs sent to Angel",
+      "eta": "Awaiting"
+    },
+    {
+      "id": "B2",
+      "priority": "P0",
+      "owner": "Angel / Huma",
+      "status": "blocked",
+      "title": "SF Connected App credentials + SFMC credentials",
+      "detail": "Need Consumer Key + Secret for prod deployment. SFMC Client ID + Secret + Account MID for confirmation emails.",
+      "eta": "Awaiting"
+    },
+    {
+      "id": "B3",
+      "priority": "P1",
+      "owner": "Huma Yousuf",
+      "status": "blocked",
+      "title": "Update SF Flow (CreateCaseLeadandOpportunity.v2)",
+      "detail": "Flow must read new fields + SuggestedQueue__c → set OwnerId + Campaign Member creation. Huma owns the Flow.",
+      "eta": "After B1"
+    },
+    {
+      "id": "B4",
+      "priority": "P1",
+      "owner": "Monica / Josh",
+      "status": "waiting",
+      "title": "Architecture approval",
+      "detail": "ARCHITECTURE.md + EXECUTIVE_SUMMARY.md sent 2026-04-16. Waiting on review cycle.",
+      "eta": "Awaiting"
+    },
+    {
+      "id": "B5",
+      "priority": "P2",
+      "owner": "Dakshesh (5X)",
+      "status": "planned",
+      "title": "Drupal embed review",
+      "detail": "React form needs to embed in becker.com/contact-us via Drupal block. Sam to intro Dakshesh.",
+      "eta": "After approval"
+    },
+    {
+      "id": "B6",
+      "priority": "P2",
+      "owner": "Nick Leavitt",
+      "status": "partial",
+      "title": "Program nurture journeys post-form",
+      "detail": "Campaign IDs confirmed and wired. Journey event keys for post-form nurture (not post-demo) still TBD.",
+      "eta": "Pending"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "status": "confirmed",
+      "title": "ExternalWebform__c as entry point",
+      "detail": "We write one record to ExternalWebform__c. The existing SF Flow (CreateCaseLeadandOpportunity.v2) handles all dedup, Lead/Opp/Case creation, and queue assignment. We do NOT call POST /sobjects/Lead directly."
+    },
+    {
+      "id": "D2",
+      "status": "confirmed",
+      "title": "SF Flow owns dedup and record creation",
+      "detail": "Huma Yousuf updates the existing Flow to handle: Business Account match → Lead + Opp, new fields mapping, SuggestedQueue__c → OwnerId, Campaign Member creation."
+    },
+    {
+      "id": "D3",
+      "status": "confirmed",
+      "title": "Routing engine pre-calculates queue via SuggestedQueue__c",
+      "detail": "27 unit tests. Org type × employee count → 6 SF queues. Written to SuggestedQueue__c. Flow reads it to set OwnerId. Logic in code, not in Flow."
+    },
+    {
+      "id": "D4",
+      "status": "confirmed",
+      "title": "Campaign IDs confirmed and wired",
+      "detail": "All 8 B2C program campaigns + 1 B2B campaign confirmed. Campaign__c written on every ExternalWebform record. MC Connect syncs to SFMC for email sends."
+    },
+    {
+      "id": "D5",
+      "status": "confirmed",
+      "title": "No Concierge Day One hardcode",
+      "detail": "B2C Ready to Enroll enters same program-matched campaign as B2C Exploring. Concierge is a CPA-specific product, not the default for all ready-to-enroll."
+    },
+    {
+      "id": "D6",
+      "status": "pending",
+      "title": "Deployment via Drupal",
+      "detail": "Dakshesh (5X Drupal team) must confirm embed method. React form → Drupal block on becker.com/contact-us. Sam to connect."
+    }
+  ],
+  "campaigns": [
+    {
+      "path": "B2C",
+      "product": "Certified Public Accountant",
+      "id": "7013r000001l0CwAAI"
+    },
+    {
+      "path": "B2C",
+      "product": "Certified Management Accountant",
+      "id": "7013r000001l0DBAAY"
+    },
+    {
+      "path": "B2C",
+      "product": "Continuing Professional Education",
+      "id": "7013r000001l0D6AAI"
+    },
+    {
+      "path": "B2C",
+      "product": "Certified Internal Auditor",
+      "id": "701VH00000coo8bYAA"
+    },
+    {
+      "path": "B2C",
+      "product": "Enrolled Agent",
+      "id": "701VH00000cnfxAYAQ"
+    },
+    {
+      "path": "B2C",
+      "product": "Certified Financial Planner",
+      "id": "701VH00000tZNTXYA4"
+    },
+    {
+      "path": "B2C",
+      "product": "Staff Level Training",
+      "id": "701VH00000tZPTiYAO"
+    },
+    {
+      "path": "B2C",
+      "product": "CIA Challenge Exam",
+      "id": "701VH00000tZQ6QYAW"
+    },
+    {
+      "path": "B2B",
+      "product": "All products",
+      "id": "701VH00000tZOSqYAO"
+    },
+    {
+      "path": "Support",
+      "product": "—",
+      "id": null
+    }
+  ],
+  "nextSteps": [
+    {
+      "step": 1,
+      "action": "Angel creates 7 fields on ExternalWebform__c in bpedevf sandbox",
+      "owner": "Angel Cichy",
+      "unblocks": "Live end-to-end submission test"
+    },
+    {
+      "step": 2,
+      "action": "Confirm Consent_Provided__c value: \"Commercial Marketing\" vs \"Email\"",
+      "owner": "Angel Cichy",
+      "unblocks": "Consent field mapping"
+    },
+    {
+      "step": 3,
+      "action": "Confirm Lead_Source_Form__c value for RFI form",
+      "owner": "Angel Cichy",
+      "unblocks": "Lead source attribution"
+    },
+    {
+      "step": 4,
+      "action": "Huma updates SF Flow: new fields + SuggestedQueue__c → OwnerId + Campaign Member",
+      "owner": "Huma Yousuf",
+      "unblocks": "Automatic lead routing via Flow"
+    },
+    {
+      "step": 5,
+      "action": "Angel + Huma provide SF Connected App credentials (Consumer Key + Secret)",
+      "owner": "Angel / Huma",
+      "unblocks": "Production deployment"
+    },
+    {
+      "step": 6,
+      "action": "Monica + Josh approve architecture (docs sent 2026-04-16)",
+      "owner": "Monica Callahan / Josh Elefante",
+      "unblocks": "Official go-ahead to deploy"
+    },
+    {
+      "step": 7,
+      "action": "Sam fills .env with credentials → railway up → smoke test",
+      "owner": "Sam Chaudhary",
+      "unblocks": "Live on Railway"
+    },
+    {
+      "step": 8,
+      "action": "Sam intros Dakshesh (5X) for becker.com Drupal embed",
+      "owner": "Sam Chaudhary",
+      "unblocks": "Form live on becker.com"
+    },
+    {
+      "step": 9,
+      "action": "E2E smoke test: submit form → verify SF record + queue assignment + email",
+      "owner": "Sam + Huma",
+      "unblocks": "Go live"
+    }
+  ],
+  "stakeholders": [
+    {
+      "name": "Angel Cichy",
+      "role": "SF Admin",
+      "items": "Create 7 fields + confirm picklist values + Connected App creds",
+      "status": "blocked"
+    },
+    {
+      "name": "Huma Yousuf",
+      "role": "SF Developer",
+      "items": "Update SF Flow + confirm assignment rules inactive",
+      "status": "blocked"
+    },
+    {
+      "name": "Monica Callahan",
+      "role": "Business Owner",
+      "items": "Architecture approval (sent 2026-04-16)",
+      "status": "waiting"
+    },
+    {
+      "name": "Josh Elefante",
+      "role": "Product Lead",
+      "items": "Form UX sign-off (sent 2026-04-16)",
+      "status": "waiting"
+    },
+    {
+      "name": "Dakshesh (5X)",
+      "role": "Drupal Team",
+      "items": "Confirm React embed method for becker.com",
+      "status": "planned"
+    },
+    {
+      "name": "Nick Leavitt",
+      "role": "SFMC / Campaigns",
+      "items": "Define post-form nurture journeys (campaign IDs confirmed)",
+      "status": "partial"
+    }
+  ]
+}
