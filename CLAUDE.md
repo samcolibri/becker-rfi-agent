@@ -3,6 +3,53 @@
 # DO NOT EDIT field values or routing rules without re-validating against source Excel
 
 ## ═══════════════════════════════════════════════════════
+## CURRENT BUILD STATE — RESUME FROM HERE (2026-04-16)
+## ═══════════════════════════════════════════════════════
+
+### Status: BUILD COMPLETE — Awaiting stakeholder approval + credentials
+
+### What is built
+- React form (Becker official Figma design): `client/src/app/App.tsx`
+  - 4 intent paths: exploring / ready / b2b / support
+  - All field mappings, consent, UTM capture, org autocomplete, inline errors
+  - Builds to `public/` via `npm run build:client`
+- Express API: `src/server.js` — POST /api/submit, GET /api/accounts, GET /health
+- B2B routing engine: `src/routing-engine.js` — 27 unit tests, 6 SF queues
+- SF client: `src/sf-client.js` — Lead/Case create, CommSubscriptionConsent, queue assign
+- SFMC client: `src/sfmc-client.js` — 11 journey triggers, token caching
+- Lead processor: `src/lead-processor.js` — orchestrates all layers
+- Email validator: `src/email-validator.js` — Hunter.io + spam pattern filter
+- Approval docs: EXECUTIVE_SUMMARY.md, ARCHITECTURE.md, SETUP.md, README.md
+
+### Blocking for go-live
+1. Angel Cichy (SF admin): create 9 custom Lead fields → SETUP.md §1
+2. Angel Cichy: confirm 7 SF queue API names → SETUP.md §2
+3. Huma Yousuf: confirm existing SF lead assignment rules are inactive → SETUP.md §3
+4. Sam: obtain SF Connected App credentials (SF_CLIENT_ID, SF_CLIENT_SECRET, SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN)
+5. Sam: obtain SFMC credentials + 11 journey event keys → SETUP.md §6+7
+
+### To run locally once .env is filled
+```bash
+npm run build:client    # builds React → public/
+npm start               # server on :3000
+open http://localhost:3000
+```
+
+### To deploy (Railway)
+```bash
+railway login && railway up
+# set all env vars from .env.example via: railway variables set KEY=VALUE
+```
+
+### Test the routing engine (no credentials needed)
+```bash
+npm test    # 27 tests should pass
+```
+
+### Repo: https://github.com/samcolibri/becker-rfi-agent
+### Control Tower: ~/.claude/control-tower/projects/becker-rfi.yaml
+
+## ═══════════════════════════════════════════════════════
 ## FULL TRANSCRIPT INTELLIGENCE (1h6m45s — April 16, 2026)
 ## Source: /docs/B2B Lead Routing and New Form Fields Requirement Gathering.docx
 ## ═══════════════════════════════════════════════════════
