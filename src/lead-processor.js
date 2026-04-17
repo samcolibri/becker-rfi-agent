@@ -5,6 +5,25 @@ const { validateEmail } = require('./email-validator');
 
 const UTM_FIELDS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
 
+// Campaign IDs from becker_campaign_mapping.xlsx (confirmed 2026-04-17)
+const B2C_CAMPAIGN_IDS = {
+  'Certified Public Accountant':       '7013r000001l0CwAAI',
+  'Certified Management Accountant':   '7013r000001l0DBAAY',
+  'Continuing Professional Education': '7013r000001l0D6AAI',
+  'Certified Internal Auditor':        '701VH00000coo8bYAA',
+  'Enrolled Agent':                    '701VH00000cnfxAYAQ',
+  'Certified Financial Planner':       '701VH00000tZNTXYA4',
+  'Staff Level Training':              '701VH00000tZPTiYAO',
+  'CIA Challenge Exam':                '701VH00000tZQ6QYAW',
+};
+const B2B_CAMPAIGN_ID = '701VH00000tZOSqYAO';
+
+function getCampaignId(intentPath, productInterest) {
+  if (intentPath === 'support') return null;
+  if (intentPath === 'b2b') return B2B_CAMPAIGN_ID;
+  return B2C_CAMPAIGN_IDS[productInterest] || null;
+}
+
 // Maps intent path to query type expected by existing SF Flow
 function mapIntentToQueryType(intentPath) {
   if (intentPath === 'support') return 'Support Query';
@@ -63,6 +82,8 @@ function buildWebformRecord(submission, suggestedQueue) {
     Privacy_Consent_Status__c: privacyConsent ? 'Accepted' : null,
     // Free-text message for support path
     If_other__c: message || null,
+    // Campaign membership — drives SFMC email sends via MC Connect
+    Campaign__c: getCampaignId(intentPath, productInterest) || null,
   };
 }
 
@@ -82,10 +103,17 @@ async function processSubmission(submission) {
 
     // Step 2: Calculate routing queue (B2B only — we pass result to ExternalWebform)
     let suggestedQueue = null;
+    let routingConfidence = 1.0;
     if (submission.intentPath === 'b2b') {
       const routingResult = routeLead(submission);
       suggestedQueue = routingResult.queue || 'Inside Sales';
-      log.push(`Routing: ${suggestedQueue} (${routingResult.reason})`);
+      routingConfidence = routingResult.confidence ?? 1.0;
+      log.push(`Routing: ${suggestedQueue} (${routingResult.reason}) confidence=${routingConfidence.toFixed(2)}`);
+      // arxiv:2406.03441 — low confidence leads flagged for human review
+      if (routingResult.requiresHumanReview) {
+        log.push(`⚠ LOW CONFIDENCE ROUTING: ${(routingResult.ambiguityFlags || []).join(', ')} — route to Inside Sales pending human review`);
+        suggestedQueue = 'Inside Sales';
+      }
     }
 
     // Step 3: Write to ExternalWebform__c
@@ -99,6 +127,23 @@ async function processSubmission(submission) {
     const webformRecord = buildWebformRecord(submission, suggestedQueue);
     const created = await sf.createExternalWebform(webformRecord);
     log.push(`ExternalWebform__c created: ${created.id} — SF Flow will process`);
+
+    // Record routing decision to Graphiti (non-fatal)
+    if (submission.intentPath === 'b2b' && suggestedQueue) {
+      try {
+        const { execFileSync } = require('child_process');
+        const path = require('path');
+        const os = require('os');
+        const graphitiScript = path.join(os.homedir(), '.claude', 'control-tower', 'graphiti_brain.py');
+        execFileSync('python3', [
+          graphitiScript, 'record-routing',
+          submission.organizationType || 'unknown',
+          submission.employeeCount    || 'unknown',
+          submission.productInterest  || 'unknown',
+          suggestedQueue,
+        ], { timeout: 5000 });
+      } catch (_e) { /* non-fatal */ }
+    }
 
     // Step 4: Confirmation email via SFMC — fires on ALL paths < 20 min
     await sfmc.fireJourneyEntry({

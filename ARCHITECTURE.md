@@ -110,8 +110,13 @@ Huma Yousuf will update this Flow to add:
 ### Decision 3: Routing engine pre-calculates queue, passes via SuggestedQueue__c
 Our routing engine (27 unit tests) calculates the correct SF queue from org type × employee count. It writes the result into `SuggestedQueue__c` on the ExternalWebform record. The Flow reads this field and sets OwnerId. This keeps routing logic in code (easy to update) and the Flow just consumes the result.
 
-### Decision 4: SFMC journeys TBD — pending Nick Leavitt
-Angel flagged that the original journey list (CPA Demo, CMA Demo, etc.) fires **post-demo**, not post-form-submission. Nick Leavitt is the correct owner. Until Nick defines the correct journeys, only the confirmation email fires via SFMC. Campaign membership (via `Campaign__c` lookup on ExternalWebform) will drive email sends.
+### Decision 4: Campaign IDs confirmed — Campaign__c wired
+Campaign mapping confirmed (2026-04-17). `Campaign__c` is written on every ExternalWebform record:
+- B2C (Exploring/Ready) → program-specific campaign ID (CPA / CMA / CPE / CIA / EA / CFP / Staff Level Training / CIA Challenge Exam)
+- B2B (all products) → single B2B campaign ID `701VH00000tZOSqYAO`
+- Support → no campaign (null)
+
+MC Connect syncs Campaign Members to SFMC, driving email sends without Journey entry event keys. Confirmation email still fires on all paths via SFMC Journey Builder. Program nurture journeys (post-form, not post-demo) pending Nick Leavitt to define correct journeys.
 
 ### Decision 5: No Concierge Day One hardcode for B2C Ready
 B2C Ready to Enroll enters the **same program-matched campaign/journey as B2C Exploring**. Concierge is a specific CPA product — it is not the default for all ready-to-enroll submissions. Nick Leavitt to confirm correct journey per program.
@@ -253,7 +258,7 @@ Org type × employee count → SF queue. Calculated by routing engine, passed to
 | 1 | Create 6 new fields on ExternalWebform__c | Angel Cichy | Pending |
 | 2 | Confirm existing picklist values (Primary_Interest__c, Consent_Provided__c, etc.) | Angel Cichy | Pending |
 | 3 | Update SF Flow for new fields + Business Account path + campaign membership | Huma Yousuf | Pending |
-| 4 | Define which campaigns/journeys fire on form submission | Nick Leavitt | Pending |
+| 4 | Campaign IDs wired (Campaign__c on ExternalWebform). Nurture journeys post-form TBD | Nick Leavitt | Partial ✓ |
 | 5 | SF Connected App credentials + SFMC credentials | Angel / Huma | Pending |
 | 6 | Drupal deployment review — how React form embeds | Dakshesh (5X) | Pending |
 
