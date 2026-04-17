@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Becker RFI Agent — Live Salesforce Connection</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1a2e; }
+  .header { background: linear-gradient(135deg, #c41e3a, #8b0000); color: white; padding: 40px 48px; }
+  .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+  .header p { opacity: 0.85; font-size: 15px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 20px; padding: 4px 14px; font-size: 13px; font-weight: 600; margin-top: 14px; }
+  .badge .dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; padding: 32px 48px; }
+  .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .card .label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 8px; }
+  .card .value { font-size: 32px; font-weight: 700; color: #c41e3a; }
+  .card .sub { font-size: 13px; color: #6b7280; margin-top: 4px; }
+  .section { padding: 0 48px 32px; }
+  .section h2 { font-size: 16px; font-weight: 600; color: #374151; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section h2 span { background: #fee2e2; color: #c41e3a; padding: 2px 10px; border-radius: 12px; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  th { background: #f9fafb; padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+  td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid #f3f4f6; }
+  tr:last-child td { border-bottom: none; }
+  .field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .field-pill { background: white; border-radius: 8px; padding: 10px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+  .field-pill .name { font-family: monospace; font-size: 12px; color: #374151; }
+  .field-pill .type { font-size: 11px; color: #9ca3af; background: #f3f4f6; padding: 2px 8px; border-radius: 10px; }
+  .status-ok { color: #059669; font-weight: 600; }
+  .status-missing { color: #dc2626; font-weight: 600; }
+  .queue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .queue-pill { background: white; border-radius: 8px; padding: 8px 14px; font-size: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); color: #374151; }
+  .highlight { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #92400e; margin-bottom: 16px; }
+  .timestamp { font-size: 11px; color: #9ca3af; padding: 0 48px 32px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Becker RFI Agent — Salesforce Connection</h1>
+  <p>Live read from <strong>Becker Professional Education</strong> sandbox (bpedevf) · Org ID: 00DU7000002yI5lMAE</p>
+  <div class="badge"><span class="dot"></span> AUTHENTICATED · SOAP Login · test.salesforce.com · v59.0</div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <div class="label">Org Name</div>
+    <div class="value" style="font-size:20px;margin-top:4px">Becker Professional Education</div>
+    <div class="sub">Unlimited Edition · Instance: USA654S</div>
+  </div>
+  <div class="card">
+    <div class="label">ExternalWebform__c Records</div>
+    <div class="value">7,185</div>
+    <div class="sub">Live submissions in this object</div>
+  </div>
+  <div class="card">
+    <div class="label">Leads Created This Year</div>
+    <div class="value">76</div>
+    <div class="sub">In sandbox (bpedevf)</div>
+  </div>
+  <div class="card">
+    <div class="label">SF API Version</div>
+    <div class="value" style="font-size:22px;margin-top:6px">v59.0</div>
+    <div class="sub">REST + SOAP · No Connected App needed</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>5 Most Recent ExternalWebform__c Submissions <span>LIVE DATA</span></h2>
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Email</th><th>Lead Source Form</th><th>SF Record ID</th><th>Submitted</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Test test</td><td>usertestigor+dev22@gmail.com</td><td>CPA Demo form</td><td style="font-family:monospace;font-size:11px">a7IU7000004RaBZMA0</td><td>Apr 17, 2026</td></tr>
+      <tr><td>Elena Paskaleva</td><td>paskalevae@gmail.com</td><td>CIA Exam Review Demo</td><td style="font-family:monospace;font-size:11px">a7IU7000004Q5zRMAS</td><td>Apr 15, 2026</td></tr>
+      <tr><td>Ronaldo Da Silva Lima</td><td>ronaldoslima21@gmail.com</td><td>CIA Practice Questions</td><td style="font-family:monospace;font-size:11px">a7IU7000004O3AXMA0</td><td>Apr 9, 2026</td></tr>
+      <tr><td>William Jansen</td><td>heino@kisting.com</td><td>CIA Exam Review Demo</td><td style="font-family:monospace;font-size:11px">a7IU7000004JI3lMAG</td><td>Mar 31, 2026</td></tr>
+      <tr><td>Test CDM Logic</td><td>testcdmlogic@mailinator.com</td><td>—</td><td style="font-family:monospace;font-size:11px">a7IU7000004InrBMAS</td><td>Mar 31, 2026</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>ExternalWebform__c Field Status <span>60 fields confirmed</span></h2>
+  <div class="highlight">✅ All fields our form writes to are confirmed present. 7 new fields need to be created by Angel Cichy before full launch.</div>
+  <div class="field-grid">
+    <div class="field-pill"><span class="name">Email__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">First_Name__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">Last_Name__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">Phone__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">Company__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">Primary_Interest__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">Address__StateCode__s</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">YearInSchool__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">Campaign__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">Consent_Provided__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">Privacy_Consent_Status__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">Lead_Source_Form__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">Lead_Source_Form_Date__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">BusinessBrand__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">If_other__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">email_address_you_use_to_login_to_Becker__c</span><span class="status-ok">✓ exists</span></div>
+    <div class="field-pill"><span class="name">IntentPath__c</span><span class="status-missing">✗ create needed</span></div>
+    <div class="field-pill"><span class="name">OrganizationType__c</span><span class="status-missing">✗ create needed</span></div>
+    <div class="field-pill"><span class="name">RoleType__c</span><span class="status-missing">✗ create needed</span></div>
+    <div class="field-pill"><span class="name">OrgSizeCategory__c</span><span class="status-missing">✗ create needed</span></div>
+    <div class="field-pill"><span class="name">SuggestedQueue__c</span><span class="status-missing">✗ create needed</span></div>
+    <div class="field-pill"><span class="name">LeadSourceDetail__c</span><span class="status-missing">✗ create needed</span></div>
+    <div class="field-pill"><span class="name">QueryType__c</span><span class="status-missing">✗ create needed</span></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Salesforce Queues in Sandbox <span>live</span></h2>
+  <div class="queue-grid">
+    <div class="queue-pill">Additional Service Tracking</div>
+    <div class="queue-pill">Becker India Operations</div>
+    <div class="queue-pill">Becker Tuition Advantage</div>
+    <div class="queue-pill">BeckerKB - AUD Evolution</div>
+    <div class="queue-pill">BeckerKB-Audit</div>
+    <div class="queue-pill">BeckerKB-BeckerAcademy</div>
+    <div class="queue-pill">BeckerKB-Business</div>
+    <div class="queue-pill">BeckerKB-CIA</div>
+    <div class="queue-pill">BeckerKB-EnrolledAgent</div>
+    <div class="queue-pill">BeckerKB-Financial</div>
+    <div class="queue-pill">BeckerKB-ISC</div>
+    <div class="queue-pill">BeckerKB-Regulation</div>
+    <div class="queue-pill">BeckerKB-TCP</div>
+    <div class="queue-pill">Business Operations</div>
+    <div class="queue-pill">Campus Ambassador Program</div>
+    <div class="queue-pill">Catchall</div>
+    <div class="queue-pill">CMA Academic Support</div>
+    <div class="queue-pill">CMA Customer and Technical Support</div>
+    <div class="queue-pill">Complimentary Materials Requests</div>
+    <div class="queue-pill">Contract Billing Tasks</div>
+  </div>
+  <p style="font-size:12px;color:#9ca3af;margin-top:10px">⚠ Note: routing queues (Inside Sales, Global Firms, New Client Acquisition, University, International, CS&E) not yet visible — Angel to confirm their exact API names.</p>
+</div>
+
+<div class="timestamp">Generated live: April 17, 2026 · Becker RFI Agent · github.com/samcolibri/becker-rfi-agent · Authentication: SOAP login, no Connected App required</div>
+
+</body>
+</html>
