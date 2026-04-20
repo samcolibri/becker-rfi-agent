@@ -1,113 +1,207 @@
-# Drupal Embed Guide — Becker RFI Form
+# Drupal → Salesforce Integration Guide
 ## For: Dakshesh (5X Drupal Team)
 ## Last updated: 2026-04-20
 
 ---
 
-## What This Is
+## Overview
 
-The Becker RFI multi-step contact routing form is a pre-built React application
-hosted on Railway. To add it to any Drupal page, Dakshesh pastes a two-line
-HTML snippet into a Custom Block. No Drupal module installation required.
+The Becker RFI form collects lead data in Drupal and submits it **directly to Salesforce**.
+Salesforce handles all routing, lead creation, queue assignment, and campaign membership
+via a Flow triggered on `ExternalWebform__c` insert.
+
+```
+Drupal Form → Salesforce REST API → ExternalWebform__c → SF Flow → Lead + Queue Assignment
+```
+
+No middleware server. No Railway. Pure Drupal → Salesforce.
 
 ---
 
-## Step 1 — Get the Production API URL from Sam
+## Credentials Dakshesh Needs (from Huma Yousuf)
 
-Before going live, Sam will provide the Railway deployment URL, e.g.:
-
-```
-https://becker-rfi-agent.up.railway.app
-```
-
-Replace `YOUR_API_URL` in the snippet below with that URL.
-
----
-
-## Step 2 — Paste This Snippet Into a Drupal Custom Block
-
-In Drupal admin:
-1. Go to **Structure → Block Layout → Add Custom Block**
-2. Set the body format to **Full HTML** or **Raw HTML**
-3. Paste the snippet below
-4. Place the block on the desired page (e.g. `/contact-us`)
-
-```html
-<!-- Becker RFI Form — do not modify -->
-<div id="becker-rfi-root"></div>
-<script
-  src="YOUR_API_URL/static/js/main.js"
-  data-api="YOUR_API_URL"
-  defer>
-</script>
-```
-
-**Example with live URL:**
-```html
-<div id="becker-rfi-root"></div>
-<script
-  src="https://becker-rfi-agent.up.railway.app/static/js/main.js"
-  data-api="https://becker-rfi-agent.up.railway.app"
-  defer>
-</script>
-```
+| Credential | What It Is | Notes |
+|---|---|---|
+| `SF_CLIENT_ID` | Connected App consumer key | Huma creates Connected App in SF Setup |
+| `SF_CLIENT_SECRET` | Connected App consumer secret | Same Connected App |
+| `SF_LOGIN_URL` | Auth endpoint | `https://login.salesforce.com` (prod) / `https://test.salesforce.com` (sandbox) |
+| `SF_INSTANCE_URL` | Org base URL | e.g. `https://colibri.my.salesforce.com` |
+| `ExternalWebform__c` field API names | All custom field names | Huma provides after creating fields |
 
 ---
 
-## Step 3 — Whitelist the Domain (Sam's side)
+## Step 1 — Huma Creates the Salesforce Connected App
 
-Sam needs the exact Drupal domain to add to the API CORS allowlist.
-Provide Sam with:
+In Salesforce Setup → App Manager → New Connected App:
 
-- Production domain: e.g. `https://www.becker.com`
-- Staging domain: e.g. `https://staging.becker.com`
+- **Enable OAuth Settings:** Yes
+- **Callback URL:** `https://www.becker.com` (or Drupal staging domain)
+- **OAuth Scopes:** `api`, `refresh_token`, `offline_access`
+- **Require Secret for Web Server Flow:** Yes
 
-Sam adds these to `ALLOWED_ORIGINS` in the Railway environment variables.
-No code change required — just an env var update.
-
----
-
-## Step 4 — Confirm CSP Headers (Charlene / DevOps)
-
-Drupal typically sets a `Content-Security-Policy` header that can block
-external scripts. Charlene or the DevOps team needs to add the Railway
-domain to the CSP `script-src` directive:
-
-```
-Content-Security-Policy: script-src 'self' https://becker-rfi-agent.up.railway.app;
-```
-
-Without this, the form script will be blocked by the browser silently.
+Huma sends `CLIENT_ID` and `CLIENT_SECRET` to Dakshesh securely.
 
 ---
 
-## UTM Parameter Capture
+## Step 2 — Authenticate from Drupal (OAuth2 Client Credentials)
 
-The form automatically reads UTM params from the page URL on load.
-No Drupal configuration needed. Example:
+Drupal calls SF OAuth endpoint to get an access token before each submission
+(or cache the token until it expires):
 
 ```
-https://www.becker.com/contact-us?utm_source=google&utm_medium=cpc&utm_campaign=cpa-q2
+POST https://login.salesforce.com/services/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&client_id=YOUR_CLIENT_ID
+&client_secret=YOUR_CLIENT_SECRET
 ```
 
-These are passed directly to Salesforce on form submission.
+Response:
+```json
+{
+  "access_token": "00D...",
+  "instance_url": "https://colibri.my.salesforce.com",
+  "token_type": "Bearer"
+}
+```
 
 ---
 
-## Floating Widget (Future — Josh's Request)
+## Step 3 — Submit Form Data to ExternalWebform__c
 
-To show the form as a floating button on every page, add the snippet to
-a block in the **global footer region** in Drupal's Block Layout.
-The form renders inline or as a modal — Sam configures the display mode.
+On form submit, Drupal POSTs to the Salesforce REST API:
+
+```
+POST https://colibri.my.salesforce.com/services/data/v59.0/sobjects/ExternalWebform__c
+Authorization: Bearer {access_token}
+Content-Type: application/json
+
+{
+  "First_Name__c": "Jane",
+  "Last_Name__c": "Smith",
+  "Email__c": "jane@example.com",
+  "Phone__c": "312-555-0100",
+  "Requesting_For__c": "My organization",
+  "Primary_Interest__c": "Certified Public Accountant",
+  "Organization_Type__c": "Accounting Firm",
+  "Org_Size_Category__c": "26-100",
+  "HQ_State__c": "IL",
+  "Role_Type__c": "Partner/CEO/CFO",
+  "Company__c": "Smith & Associates CPA",
+  "IntentPath__c": "b2b",
+  "Business_Brand__c": "Becker Professional Education Corporation",
+  "Lead_Source_Form__c": "Web - Contact Us Form",
+  "Lead_Source_Form_Date__c": "2026-04-20T14:30:00Z",
+  "Lead_Source_Detail__c": "utm_source=google | utm_medium=cpc | utm_campaign=b2b-cpa",
+  "Consent_Provided__c": "Commercial Marketing",
+  "Consent_Captured_Source__c": "RFI Form — becker.com/contact-us",
+  "Privacy_Consent_Status__c": "Accepted",
+  "Campaign__c": "701VH00000tZOSqYAO"
+}
+```
+
+Salesforce responds with the new record ID:
+```json
+{ "id": "a0B...", "success": true }
+```
+
+The SF Flow fires automatically on insert — no further API calls needed.
 
 ---
 
-## What Dakshesh Does NOT Need to Do
+## Step 4 — Field Reference (ExternalWebform__c)
 
-- Install any Drupal module
-- Touch the Salesforce or SFMC configuration
-- Handle form submissions — all routing happens server-side on Railway
-- Rebuild or modify the form — design changes go through Sam
+All fields Drupal must populate on submission:
+
+### Required for All Submissions
+| Field API Name | Form Field | Example Value |
+|---|---|---|
+| `First_Name__c` | First Name | `Jane` |
+| `Last_Name__c` | Last Name | `Smith` |
+| `Email__c` | Email | `jane@firm.com` |
+| `Requesting_For__c` | Requesting For | `Myself` or `My organization` |
+| `Primary_Interest__c` | Product Interest | `Certified Public Accountant` |
+| `IntentPath__c` | Intent (Step 1 card) | `exploring` / `ready` / `b2b` / `support` |
+| `Consent_Provided__c` | Marketing opt-in | `Commercial Marketing` or blank |
+| `Privacy_Consent_Status__c` | Privacy checkbox | `Accepted` |
+| `Consent_Captured_Source__c` | Auto | `RFI Form — becker.com/contact-us` |
+| `Business_Brand__c` | Auto | `Becker Professional Education Corporation` |
+| `Lead_Source_Form__c` | Auto | `Web - Contact Us Form` |
+| `Lead_Source_Form_Date__c` | Auto | ISO timestamp at submit |
+
+### B2B Only (`Requesting_For__c = 'My organization'`)
+| Field API Name | Form Field | Example Value |
+|---|---|---|
+| `Company__c` | Organization Name | `Smith & Associates CPA` |
+| `Organization_Type__c` | Organization Type | `Accounting Firm` |
+| `Org_Size_Category__c` | # of Employees | `26-100` |
+| `HQ_State__c` | HQ State / Province | `IL` |
+| `Phone__c` | Phone | `312-555-0100` |
+| `Role_Type__c` | Role Type | `Partner/CEO/CFO` |
+
+### B2C Only (`Requesting_For__c = 'Myself'`)
+| Field API Name | Form Field | Example Value |
+|---|---|---|
+| `Resident_State__c` | State of Residence | `IL` |
+| `Role_Type__c` | Role Type | `Grad Student` |
+| `Graduation_Year__c` | Graduation Year | `2026` or `0000` |
+| `Is_Current_Becker_Student__c` | Current Becker student? | `true` / `false` |
+| `Becker_Student_Email__c` | Becker login email | `jane@becker.com` |
+
+### Optional (All Paths)
+| Field API Name | Form Field | Notes |
+|---|---|---|
+| `Campaign__c` | Auto | SF Campaign ID — see campaign mapping below |
+| `Lead_Source_Detail__c` | Auto | UTM params from page URL |
+| `Message__c` | Notes / Message | Free text |
+
+---
+
+## Step 5 — Campaign ID Mapping
+
+Drupal must resolve the correct Campaign ID based on `Requesting_For__c` + `Primary_Interest__c`
+and pass it in `Campaign__c`:
+
+### B2C Campaign IDs (per Product Interest)
+| Product Interest | Campaign ID |
+|---|---|
+| Certified Public Accountant | `7013r000001l0CwAAI` |
+| Certified Management Accountant | `7013r000001l0DBAAY` |
+| Continuing Professional Education | `7013r000001l0D6AAI` |
+| Certified Internal Auditor | `701VH00000coo8bYAA` |
+| Enrolled Agent | `701VH00000cnfxAYAQ` |
+| Certified Financial Planner | `701VH00000tZNTXYA4` |
+| Staff Level Training | `701VH00000tZPTiYAO` |
+| CIA Challenge Exam | `701VH00000tZQ6QYAW` |
+
+### B2B Campaign ID (all products)
+`701VH00000tZOSqYAO`
+
+---
+
+## Step 6 — UTM Parameter Capture
+
+Drupal should read UTM params from the page URL on form load and populate
+`Lead_Source_Detail__c` as a pipe-separated string:
+
+```
+utm_source=google | utm_medium=cpc | utm_campaign=b2b-cpa-q2
+```
+
+---
+
+## What Happens After Drupal Submits
+
+Drupal's job ends after the POST. Salesforce takes over:
+
+1. SF Flow fires on `ExternalWebform__c` insert
+2. Flow checks for existing Lead by email (dedup)
+3. Flow checks for existing Account by company name
+4. Flow creates Lead with B2B or B2C Record Type
+5. Flow assigns Lead to the correct queue based on routing matrix
+6. Flow creates CampaignMember linking Lead to Campaign
+7. SFMC confirmation email triggers automatically
 
 ---
 
@@ -115,7 +209,7 @@ The form renders inline or as a modal — Sam configures the display mode.
 
 | Person | Role | For |
 |---|---|---|
-| Sam Chaudhary | Developer | API URL, CORS, form changes |
-| Dakshesh | Drupal Team Lead | Block placement, CSP coordination |
-| Charlene Ceci | DevOps / Drupal | CSP header update, release window |
-| Josh Elefante | Product Lead | Page placement approval |
+| Huma Yousuf | Salesforce Developer | Connected App credentials, field API names, Flow |
+| Dakshesh | Drupal Team Lead | Form build, API integration, token caching |
+| Charlene Ceci | DevOps | Release window coordination |
+| Sam Chaudhary | AI Architect | Field mapping questions, campaign IDs |
