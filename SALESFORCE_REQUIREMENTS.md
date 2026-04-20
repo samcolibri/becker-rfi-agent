@@ -6,7 +6,7 @@
 
 ## 1. New Custom Fields Required on Lead Object
 
-Angel Cichy needs to create all of these. None exist today per sheet 1 of source file.
+Huma Yousuf needs to create all of these. None exist today per sheet 1 of source file.
 
 | Field Label | Suggested API Name | Type | Picklist Values | Who Uses It |
 |---|---|---|---|---|
@@ -31,7 +31,7 @@ Flow must set `RecordType` on every new Lead based on `Requesting_For__c`:
 | `My organization` | **B2B Lead** | Exploring (B2B), Buying for My Organization |
 | `Myself` | **B2C Lead** | Exploring (B2C), Ready to Enroll |
 
-> **Open item:** Confirm exact Record Type API names with Angel. Sheet 1 asks: "can we use B2B or B2C record type here?"
+> **Open item:** Confirm exact Record Type API names with Huma. Sheet 1 asks: "can we use B2B or B2C record type here?"
 
 ---
 
@@ -206,10 +206,10 @@ ExternalWebform__c INSERT
 | `Email` | `Email__c` | |
 | `Phone` | `Phone__c` | |
 | `Company` | `Company__c` | |
-| `RecordTypeId` | If `Requesting_For__c = 'My organization'` → B2B Record Type ID; else → B2C Record Type ID | Hardcode both IDs after Angel creates them |
+| `RecordTypeId` | If `Requesting_For__c = 'My organization'` → B2B Record Type ID; else → B2C Record Type ID | Hardcode both IDs after Huma creates them |
 | `LeadSource` | `Lead_Source_Form__c` | Always: `Web - Contact Us Form` |
 | `Product_Line_MS__c` | `Primary_Interest__c` | Existing SF field |
-| `Organization_Type__c` | `Organization_Type__c` | New field — Angel must create first |
+| `Organization_Type__c` | `Organization_Type__c` | New field — Huma must create first |
 | `Org_Size_Category__c` | `Org_Size_Category__c` | New field — confirm vs `Training_Audience_Size__c` |
 | `Role_Type__c` | `Role_Type__c` | New field |
 | `HQ_State__c` | `HQ_State__c` | New field — B2B only |
@@ -279,10 +279,10 @@ The remaining 5 new fields (`Resident_State__c`, `Graduation_Year__c`, `Becker_S
 
 | # | Blocker | Owner |
 |---|---|---|
-| 1 | Create 4 minimum Lead custom fields (Section 10) | Angel Cichy |
-| 2 | Confirm exact B2B / B2C Lead Record Type API names | Angel Cichy |
-| 3 | Confirm `Training_Audience_Size__c` vs new `Org_Size_Category__c` | Angel Cichy |
-| 4 | Confirm 14 CommSubscriptionConsent channel types are configured | Angel Cichy |
+| 1 | Create 4 minimum Lead custom fields (Section 10) | Huma Yousuf |
+| 2 | Confirm exact B2B / B2C Lead Record Type API names | Huma Yousuf |
+| 3 | Confirm `Training_Audience_Size__c` vs new `Org_Size_Category__c` | Huma Yousuf |
+| 4 | Confirm 14 CommSubscriptionConsent channel types are configured | Huma Yousuf |
 | 5 | Confirm existing email-based Lead duplicate rules are inactive | Huma Yousuf |
 | 6 | Role Type — single shared picklist or separate B2B / B2C picklists? | Monica Callahan |
 | 7 | Graduation Year — exact year range for dropdown | Monica Callahan |
