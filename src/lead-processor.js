@@ -24,12 +24,6 @@ function getCampaignId(intentPath, productInterest) {
   return B2C_CAMPAIGN_IDS[productInterest] || null;
 }
 
-// Maps intent path to query type expected by existing SF Flow
-function mapIntentToQueryType(intentPath) {
-  if (intentPath === 'support') return 'Support Query';
-  return 'Sales Query';
-}
-
 function mapIntentToStatus(intentPath) {
   const map = {
     exploring: 'Exploring',
@@ -74,8 +68,6 @@ function buildWebformRecord(submission, suggestedQueue) {
     // Our routing engine result — SF Flow reads this to set OwnerId
     SuggestedQueue__c: suggestedQueue || null,
     LeadSourceDetail__c: utmStr || null,
-    // QueryType drives the SF Flow branch (Sales Query / Support Query)
-    QueryType__c: mapIntentToQueryType(intentPath),
     // Consent
     Consent_Provided__c: consentGiven ? 'Commercial Marketing' : null,
     Consent_Captured_Source__c: 'RFI Form — becker.com/contact-us',
