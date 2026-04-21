@@ -63,7 +63,32 @@ function routeB2B({ orgType, employeeCount, state, existingAccountOwner, account
     }
   }
 
-  return { queue, rep: null, reason: `Matrix: ${orgType} × ${normalizedSize}` };
+  // Confidence score (arxiv:2406.03441 — Cycles of Thought)
+  // Low confidence = ambiguous lead that shouldn't auto-route without human review
+  let confidence = 1.0;
+  const ambiguityFlags = [];
+
+  if (!orgType || orgType === 'Other' || orgType === 'unknown') {
+    confidence -= 0.4;
+    ambiguityFlags.push('org_type_unknown_or_other');
+  }
+  if (!employeeCount || normalizedSize === '<25') {
+    // Smallest bucket — many org types default to Inside Sales here, verify
+    confidence -= 0.1;
+  }
+  if (!matrix) {
+    confidence -= 0.5;
+    ambiguityFlags.push('no_matrix_row_for_org_type');
+  }
+
+  return {
+    queue,
+    rep: null,
+    reason: `Matrix: ${orgType} × ${normalizedSize}`,
+    confidence: Math.max(0.1, confidence),
+    requiresHumanReview: confidence < 0.7 || ambiguityFlags.length > 0,
+    ambiguityFlags,
+  };
 }
 
 // Phase 2 NCA territory lookup

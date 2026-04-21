@@ -18,6 +18,22 @@ const B2C_CAMPAIGN_IDS = {
 };
 const B2B_CAMPAIGN_ID = '701VH00000tZOSqYAO';
 
+// ExternalWebform__c.Primary_Interest__c uses abbreviated picklist values
+const PRODUCT_INTEREST_MAP = {
+  'Certified Public Accountant':       'CPA',
+  'Certified Management Accountant':   'CMA',
+  'Continuing Professional Education': 'CPE',
+  'Certified Internal Auditor':        'CIA',
+  'CIA Challenge Exam':                'CIA',
+  'Enrolled Agent':                    'EA',
+  'Certified Financial Planner':       'CFP',
+  'Staff Level Training':              'CPA',
+};
+
+function toSfProductInterest(productInterest) {
+  return PRODUCT_INTEREST_MAP[productInterest] || productInterest || null;
+}
+
 function getCampaignId(intentPath, productInterest) {
   if (intentPath === 'support') return null;
   if (intentPath === 'b2b') return B2B_CAMPAIGN_ID;
@@ -53,25 +69,29 @@ function buildWebformRecord(submission, suggestedQueue) {
     Email__c: email,
     Phone__c: phone || null,
     Company__c: orgName || null,
-    Primary_Interest__c: productInterest || null,
-    IntentPath__c: intentPath,
-    OrganizationType__c: orgType || null,
-    RoleType__c: roleType || null,
-    OrgSizeCategory__c: orgSize || null,
-    // Address state sub-field
+    Primary_Interest__c: toSfProductInterest(productInterest),
+    RFI_Intent_Path__c: intentPath,
+    Requesting_for__c: intentPath === 'b2b' ? 'My organization' : 'Myself',
+    Organization_Type__c: orgType || null,
+    Role_Type__c: roleType || null,
+    Organization_Size__c: orgSize || null,
     Address__StateCode__s: state || null,
     email_address_you_use_to_login_to_Becker__c: beckerStudentEmail || null,
     YearInSchool__c: graduationYear || null,
     BusinessBrand__c: 'Becker Professional Education Corporation',
-    Lead_Source_Form__c: 'Web - Contact Us Form',
+    Lead_Source_Form__c: {
+      b2b: 'Contact Us - Buying for Org',
+      exploring: 'Contact Us - Exploring',
+      ready: 'Contact Us - Enrolling',
+      support: 'Customer Service - Contact Us',
+    }[intentPath] || 'Contact Us - Exploring',
     Lead_Source_Form_Date__c: new Date().toISOString(),
-    // Our routing engine result — SF Flow reads this to set OwnerId
-    SuggestedQueue__c: suggestedQueue || null,
-    LeadSourceDetail__c: utmStr || null,
-    // Consent
-    Consent_Provided__c: consentGiven ? 'Commercial Marketing' : null,
+    RFI_Suggested_Queue__c: suggestedQueue || null,
+    Lead_Source_Detail__c: utmStr || null,
+    // Consent — values match ExternalWebform__c restricted picklists
+    Consent_Provided__c: consentGiven ? 'Email' : null,
     Consent_Captured_Source__c: 'RFI Form — becker.com/contact-us',
-    Privacy_Consent_Status__c: privacyConsent ? 'Accepted' : null,
+    Privacy_Consent_Status__c: privacyConsent ? 'OptIn' : 'NotSeen',
     // Free-text message for support path
     If_other__c: message || null,
     // Campaign membership — drives SFMC email sends via MC Connect

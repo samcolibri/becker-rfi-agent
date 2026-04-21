@@ -1,40 +1,59 @@
-const https = require('https');
-
-const SF_BASE = process.env.SF_INSTANCE_URL;
+// SOAP login — no Connected App required. Uses username + password + security token.
+// Returns { accessToken, instanceUrl }
 const SF_API_VERSION = process.env.SF_API_VERSION || 'v59.0';
+const SF_LOGIN_URL   = process.env.SF_LOGIN_URL   || 'https://test.salesforce.com'; // sandbox default
 
-let _accessToken = null;
+let _session = null; // { accessToken, instanceUrl }
 
-async function getAccessToken() {
-  if (_accessToken) return _accessToken;
+async function getSession() {
+  if (_session) return _session;
 
-  const params = new URLSearchParams({
-    grant_type: 'password',
-    client_id: process.env.SF_CLIENT_ID,
-    client_secret: process.env.SF_CLIENT_SECRET,
-    username: process.env.SF_USERNAME,
-    password: process.env.SF_PASSWORD + (process.env.SF_SECURITY_TOKEN || ''),
-  });
+  const username = process.env.SF_USERNAME;
+  const password = (process.env.SF_PASSWORD || '') + (process.env.SF_SECURITY_TOKEN || '');
 
-  const res = await fetch(`${SF_BASE}/services/oauth2/token`, {
+  const soapBody = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:urn="urn:partner.soap.sforce.com">
+  <soapenv:Body>
+    <urn:login>
+      <urn:username>${username}</urn:username>
+      <urn:password>${password}</urn:password>
+    </urn:login>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+  const res = await fetch(`${SF_LOGIN_URL}/services/Soap/u/${SF_API_VERSION}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params,
+    headers: {
+      'Content-Type': 'text/xml',
+      'SOAPAction': 'login',
+    },
+    body: soapBody,
   });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`SF auth failed: ${err}`);
+  const xml = await res.text();
+  if (!res.ok || xml.includes('<faultcode>')) {
+    const fault = xml.match(/<faultstring>(.*?)<\/faultstring>/s)?.[1] || xml.slice(0, 300);
+    throw new Error(`SF SOAP login failed: ${fault}`);
   }
 
-  const data = await res.json();
-  _accessToken = data.access_token;
-  return _accessToken;
+  const token       = xml.match(/<sessionId>(.*?)<\/sessionId>/)?.[1];
+  const serverUrl   = xml.match(/<serverUrl>(.*?)<\/serverUrl>/)?.[1];
+  const instanceUrl = serverUrl?.match(/^(https:\/\/[^/]+)/)?.[1];
+
+  if (!token || !instanceUrl) throw new Error('SF SOAP login: could not parse sessionId/serverUrl');
+
+  _session = { accessToken: token, instanceUrl };
+  return _session;
+}
+
+async function getAccessToken() {
+  return (await getSession()).accessToken;
 }
 
 async function sfRequest(method, path, body) {
-  const token = await getAccessToken();
-  const url = `${SF_BASE}/services/data/${SF_API_VERSION}${path}`;
+  const { accessToken: token, instanceUrl } = await getSession();
+  const url = `${instanceUrl}/services/data/${SF_API_VERSION}${path}`;
 
   const res = await fetch(url, {
     method,
