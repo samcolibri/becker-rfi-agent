@@ -5,18 +5,21 @@ const { validateEmail } = require('./email-validator');
 
 const UTM_FIELDS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
 
-// Campaign IDs from becker_campaign_mapping.xlsx (confirmed 2026-04-17)
+// Campaign IDs synced from SF sandbox on 2026-04-21
+// Source: becker_campaign_mapping.xlsx (Josh Elefante) cross-referenced with Dev sandbox campaigns (Huma Yousuf)
+// B2C: product-specific per Josh's mapping; B2B: single "B2B Lead Form" campaign regardless of product
+// IMPORTANT: these IDs are sandbox-specific — re-run scripts/sync-campaign-ids.js before deploying to prod
 const B2C_CAMPAIGN_IDS = {
-  'Certified Public Accountant':       '7013r000001l0CwAAI',
-  'Certified Management Accountant':   '7013r000001l0DBAAY',
-  'Continuing Professional Education': '7013r000001l0D6AAI',
-  'Certified Internal Auditor':        '701VH00000coo8bYAA',
-  'Enrolled Agent':                    '701VH00000cnfxAYAQ',
-  'Certified Financial Planner':       '701VH00000tZNTXYA4',
-  'Staff Level Training':              '701VH00000tZPTiYAO',
-  'CIA Challenge Exam':                '701VH00000tZQ6QYAW',
+  'Certified Financial Planner': '701U700000eyrnyIAA',
+  'Certified Internal Auditor': '701U700000eyrnxIAA',
+  'CIA Challenge Exam': '701U700000eyro1IAA',
+  'Certified Management Accountant': '701U700000eyrnvIAA',
+  'Certified Public Accountant': '701U700000eyrntIAA',
+  'Continuing Professional Education': '701U700000eyrnuIAA',
+  'Enrolled Agent': '701U700000eyrnwIAA',
+  'Staff Level Training': '701U700000eyro0IAA',
 };
-const B2B_CAMPAIGN_ID = '701VH00000tZOSqYAO';
+const B2B_CAMPAIGN_ID = '701U700000eyrnzIAA'; // B2B Lead Form
 
 // ExternalWebform__c.Primary_Interest__c uses abbreviated picklist values
 const PRODUCT_INTEREST_MAP = {

@@ -3,12 +3,12 @@
 # DO NOT EDIT field values or routing rules without re-validating against source Excel
 
 ## ═══════════════════════════════════════════════════════
-## CURRENT BUILD STATE — RESUME FROM HERE (2026-04-16)
+## CURRENT BUILD STATE — RESUME FROM HERE (2026-04-21)
 ## ═══════════════════════════════════════════════════════
 
-### Status: BUILD COMPLETE — Awaiting stakeholder approval + credentials
+### Status: SF FLOW E2E VERIFIED ✅ — Sandbox tests passing on all 16 routing scenarios — 96 checks passed
 
-### What is built
+### What is built + verified
 - React form (Becker official Figma design): `client/src/app/App.tsx`
   - 4 intent paths: exploring / ready / b2b / support
   - All field mappings, consent, UTM capture, org autocomplete, inline errors
@@ -19,6 +19,8 @@
 - SFMC client: `src/sfmc-client.js` — 11 journey triggers, token caching
 - Lead processor: `src/lead-processor.js` — orchestrates all layers
 - Email validator: `src/email-validator.js` — Hunter.io + spam pattern filter
+- **SF Flow v12** (`Becker_RFI_Lead_Routing`): Active on ExternalWebform__c, Create, After Save
+  - Deployed 2026-04-21; E2E tested and verified
 - Approval docs: EXECUTIVE_SUMMARY.md, ARCHITECTURE.md, SETUP.md, README.md
 
 ### Blocking for go-live
@@ -27,6 +29,181 @@
 3. Huma Yousuf: confirm existing SF lead assignment rules are inactive → SETUP.md §3
 4. Sam: obtain SF Connected App credentials (SF_CLIENT_ID, SF_CLIENT_SECRET, SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN)
 5. Sam: obtain SFMC credentials + 11 journey event keys → SETUP.md §6+7
+6. **Huma: activate all 9 campaigns in sandbox** (currently inactive — set Status = "Active"):
+   - Becker.com email signup - CPA (701U700000eyrntIAA)
+   - Becker.com email signup - CPE (701U700000eyrnuIAA)
+   - Becker.com email signup - CMA (701U700000eyrnvIAA)
+   - Becker.com email signup - EA Exam Review (701U700000eyrnwIAA)
+   - Becker.com email signup - CIA (701U700000eyrnxIAA)
+   - Becker.com email signup - CFP (701U700000eyrnyIAA)
+   - B2B Lead Form (701U700000eyrnzIAA)
+   - Becker.com email signup - Staff Level Training (701U700000eyro0IAA)
+   - Becker.com email signup - CIA Challenge (701U700000eyro1IAA)
+
+### Campaign mapping (Josh's Excel → Dev sandbox)
+Source: `becker_campaign_mapping.xlsx` (Josh Elefante) + Dev campaign IDs (Huma Yousuf, 2026-04-21)
+
+**B2C** — product-specific campaign per Josh's mapping (same ID for Exploring/Myself and Ready to Enroll):
+| Product Interest | Dev Campaign ID | Campaign Name |
+|---|---|---|
+| Certified Public Accountant | 701U700000eyrntIAA | Becker.com email signup - CPA |
+| Continuing Professional Education | 701U700000eyrnuIAA | Becker.com email signup - CPE |
+| Certified Management Accountant | 701U700000eyrnvIAA | Becker.com email signup - CMA |
+| Enrolled Agent | 701U700000eyrnwIAA | Becker.com email signup - EA Exam Review |
+| Certified Internal Auditor | 701U700000eyrnxIAA | Becker.com email signup - CIA |
+| Certified Financial Planner | 701U700000eyrnyIAA | Becker.com email signup - CFP |
+| Staff Level Training | 701U700000eyro0IAA | Becker.com email signup - Staff Level Training |
+| CIA Challenge Exam | 701U700000eyro1IAA | Becker.com email signup - CIA Challenge |
+
+**B2B** — single campaign regardless of product (per Josh's mapping):
+| Path | Dev Campaign ID | Campaign Name |
+|---|---|---|
+| All B2B (Exploring/Org + Buying for Org) | 701U700000eyrnzIAA | B2B Lead Form |
+
+**Support** — no campaign (blank, per Josh's mapping ✅)
+
+These IDs are hardcoded in `src/lead-processor.js` and can be re-synced anytime with:
+```bash
+node scripts/sync-campaign-ids.js
+```
+
+## ═══════════════════════════════════════════════════════
+## SF FLOW — ARCHITECTURE & EXACT DEPLOY STEPS
+## ═══════════════════════════════════════════════════════
+
+### Flow: Becker_RFI_Lead_Routing (v11)
+- **Object**: ExternalWebform__c
+- **Trigger**: Create, After Save (no entry conditions — fires on every new EW record)
+- **Sandbox ID**: 301U700000ez6BIIAY (active version)
+- **Source**: `/tmp/becker_rfi_v12.xml` (last deployed 2026-04-21)
+
+### How the flow works (v12 logic)
+
+1. **Check_Existing_Lead** — SOQL on Lead by Email. Looks for unconverted lead with same email.
+2. **Did_Lead_Exist** decision:
+   - **YES (existing lead found)**: `Update_Existing_Lead` — updates Phone, Company, Description,
+     Subscription_id__c, Business_Brand__c, all consent fields, RecordTypeId (B2B or B2C formula).
+     Then `Set_Lead_Id_From_Existing` assigns `varCreatedLeadId = varExistingLead.Id`.
+     Flow continues to `Lookup_Queue` (same path as new lead creation).
+   - **NO (new lead)**: `Check_Existing_Account` → `Did_Account_Exist` → `Create_B2B_Lead` or
+     `Create_B2C_Lead`. Both set all fields including Subscription_id__c and RecordTypeId.
+     faultConnector on each create goes to `Handle_Duplicate_Lead` (silent boolean flag).
+
+3. **Lookup_Queue** — queries Group WHERE Type='Queue' AND Name = `$Record.RFI_Suggested_Queue__c`.
+   - If queue found → `Assign_Lead_To_Queue` (sets OwnerId to queue ID)
+   - If not found → `Lookup_Inside_Sales_Fallback` → `Assign_Lead_To_Queue`
+
+4. **Should_Create_Campaign_Member** — if `$Record.Campaign__c` is set, creates CampaignMember record.
+
+5. **Check_B2B_Account_Owner** — only runs for B2B leads where Company matched an existing Account.
+   - `Lookup_Account_Owner_User` — queries User by Account.OwnerId WHERE Sales_Channel__c IS NOT NULL AND IsActive = true.
+     (`Sales_Channel__c` is set on real sales reps, blank on ecommerce/system users.)
+   - If a real rep is found → `Assign_Lead_To_Account_Owner` overwrites queue assignment.
+   - If no rep (system/ecommerce account owner) → lead stays on queue.
+
+### Why v21/v32 runs first (important context)
+Salesforce runs multiple After Save flows on the same object in **Last Modified Date order (oldest first)**.
+Flow v21 ("External Web Form Main Record Triggered Flow After Save") was created before our flow and
+runs first. v21 calls v32 ("Create Leads Sub Flow") which creates the Lead record. Our v11 then runs,
+finds the existing lead, and updates all RFI-specific fields + assigns to queue. This is by design in v11.
+
+### Subscription_id__c formula (varSubscriptionIds)
+```
+B2B:  "B2B - News and Events;B2B - Events;B2B - New Products"
+CPA:  "CPA Content;CPA Promotions"
+CMA:  "CMA Content;CMA Promotions"
+CPE:  "CPE Content;CPE Promotions"
+CIA:  "CIA Content;CIA Promotions"
+EA:   "EA Content;EA Promotions"
+CFP:  "CPA Content;CPA Promotions"  (maps to CPA)
+default: "CPA Content;CPA Promotions"
+```
+Note: SF multipicklist fields reorder values per picklist definition — order in DB may differ from formula.
+The values are always correct; comparison must be order-insensitive.
+
+### RecordTypeId formula (varB2BRecordTypeId)
+```
+B2B (Requesting_for__c = "My organization"): 012i0000001E3hmAAC
+B2C (all other): 01231000000y0UoAAI
+```
+These IDs are sandbox-specific. Verify before deploying to production.
+
+### How to deploy a new flow version
+
+**Prerequisites**: Node.js + dotenv in `/Users/anmolsam/becker-rfi-agent/`
+
+**Step 1** — Edit the flow XML at `/tmp/becker_rfi_vNN.xml`
+
+**Step 2** — Build the ZIP (no `./` prefix — critical):
+```python
+import zipfile
+pkg = '<?xml version="1.0"...><Package>...<members>Becker_RFI_Lead_Routing</members>...<version>59.0</version></Package>'
+with zipfile.ZipFile('/tmp/becker_rfi_vNN.zip', 'w', zipfile.ZIP_DEFLATED) as zf:
+    zf.writestr('package.xml', pkg)
+    zf.writestr('flows/Becker_RFI_Lead_Routing.flow', open('/tmp/becker_rfi_vNN.xml').read())
+```
+
+**Step 3** — Deploy via SF Metadata REST API (multipart form-data, singlePackage: true):
+```js
+// In /Users/anmolsam/becker-rfi-agent/ (has node_modules/dotenv)
+const zip = fs.readFileSync('/tmp/becker_rfi_vNN.zip');
+const b64 = zip.toString('base64');
+const body = [
+  `--${boundary}`,
+  'Content-Disposition: form-data; name="entity_content"',
+  'Content-Type: application/json',
+  '',
+  JSON.stringify({ deployOptions: { checkOnly: false, ignoreWarnings: true,
+    rollbackOnError: true, testLevel: 'NoTestRun', singlePackage: true } }),
+  `--${boundary}`,
+  'Content-Disposition: form-data; name="file"; filename="becker_rfi_vNN.zip"',
+  'Content-Type: application/zip',
+  'Content-Transfer-Encoding: base64',
+  '',
+  b64,
+  `--${boundary}--`,
+].join('\r\n');
+// POST to: ${instanceUrl}/services/data/v59.0/metadata/deployRequest
+// Then poll: GET ${instanceUrl}/services/data/v59.0/metadata/deployRequest/${jobId}?includeDetails=true
+```
+
+**Critical gotchas**:
+- ZIP entries must be `package.xml` and `flows/Becker_RFI_Lead_Routing.flow` — no `./` prefix
+- Deploy must be run from `/Users/anmolsam/becker-rfi-agent/` (needs `node_modules/dotenv`)
+- `singlePackage: true` is REQUIRED — without it SF ignores the ZIP content (deploys 0 components)
+- Deploying a new version of an Active flow automatically deactivates the prior version
+- SF Metadata REST API uses multipart form-data, NOT JSON body with encodedZipFile
+
+### How to run E2E tests
+
+Create ExternalWebform__c records via SF REST API and verify resulting Lead fields.
+
+**ExternalWebform__c key fields** (confirmed picklist values):
+```
+Requesting_for__c:    'Myself' | 'My organization'
+Primary_Interest__c:  'CPA' | 'CMA' | 'CPE' | 'CIA' | 'EA' | 'CFP' | ...
+Organization_Type__c: 'Accounting Firm' | 'Corporation/Healthcare/Bank/Financial Institution' |
+                      'Consulting Firm' | 'CPA Alliance' | 'Government Agency/Not for Profit Organization' |
+                      'Society/Chapter' | 'Non-US Organization' | 'Student' | 'University' | 'Other'
+Organization_Size__c: '<25' | '26-100' | '101-250' | '251+'
+Consent_Provided__c:  'Email' | 'Phone' | 'SMS' (multipicklist — NOT boolean)
+Privacy_Consent_Status__c: 'NotSeen' | 'OptIn' | 'OptInPending' | 'OptOut' | 'OptOutPending'
+RFI_Suggested_Queue__c: text field — set by Node routing engine before creating EW record
+                         Valid values: 'Inside Sales' | 'Global Firms' | 'New Client Acquisition' |
+                         'University' | 'International' | 'Customer Success & Expansion'
+```
+
+**E2E verified routing scenarios (2026-04-21)**:
+| EW Input | Expected Lead |
+|---|---|
+| Myself + CPA + RFI_Suggested_Queue__c=Inside Sales | B2C Lead, Owner=Inside Sales, Sub=CPA Content;CPA Promotions |
+| My organization + Accounting Firm + 251+ + Global Firms | B2B Lead, Owner=Global Firms, Sub=B2B - News and Events;... |
+| My organization + Corporation + 101-250 + New Client Acquisition | B2B Lead, Owner=New Client Acquisition |
+| My organization + University + 26-100 + University | B2B Lead, Owner=University |
+
+**Wait time**: 8–10 seconds after creating EW record before querying Lead
+
+**Comparison note**: `Subscription_id__c` is a multipicklist — compare order-insensitive (sort both sides on `;`)
 
 ### To run locally once .env is filled
 ```bash
