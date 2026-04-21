@@ -6,30 +6,134 @@
 
 ## Summary
 
-The Becker RFI Lead Routing system is **fully built and end-to-end validated in sandbox**.
-Every component that does not require a human credential or physical SF UI action is live and tested.
-Two live E2E tests were run and passed against the real Salesforce sandbox today.
+The Becker RFI routing system is built, custom fields are live in sandbox, queues are
+configured, and the Node.js routing engine passes all tests. The Salesforce Flow
+architecture has been clarified: an **existing platform flow already handles
+ExternalWebform__c → Lead creation** and must be extended (not replaced) with the
+RFI-specific field mappings and queue assignment logic. Three human actions remain
+before the end-to-end path is complete.
 
 ---
 
-## What Is Live in Salesforce Sandbox RIGHT NOW
+## Salesforce Flow Architecture — CORRECTED
 
-### 1. Salesforce Flow — `Becker_RFI_Lead_Routing`
-- **Status:** Active
-- **SF Flow ID:** `301U700000exDqTIAU`
-- **Type:** Record-Triggered Flow, After Insert on `ExternalWebform__c`
-- **Deploy ID:** `0AfU700000FuDGUKA3` (Succeeded 2026-04-21)
-- **What it does:**
-  - Checks for existing Lead by email (dedup — no duplicates)
-  - Checks for existing Account by company name
-  - Creates B2B Lead (RecordType `012i0000001E3hmAAC`) if `Requesting_for__c = 'My organization'`
-  - Creates B2C Lead (RecordType `01231000000y0UoAAI`) if `Requesting_for__c = 'Myself'`
-  - Looks up queue by name from `RFI_Suggested_Queue__c` field
-  - Assigns Lead.OwnerId to the correct queue
-  - Falls back to Inside Sales if queue not found
-  - Creates CampaignMember linking Lead to Campaign
+### The Existing Flow Chain (Already Active — Do Not Replace)
 
-### 2. Salesforce Queues — All 6 Created
+```
+ExternalWebform__c INSERT
+    │
+    ▼
+"External Web Form Main Record Triggered Flow After Save"  (v21, ID: 301U700000bJ16UIAS)
+    │
+    ├── Check_If_B2B decision
+    ├── getAccountRecord lookup (dedup by company)
+    ├── getB2BContact lookup
+    │
+    ├── Calls: "Create Leads Sub Flow" (v32, ID: 301U700000dv71dIAA)
+    │     └── Creates Lead (B2B or B2C RecordType)
+    │     └── Maps: Email, Name, Phone, Brand, Consent, Lead_Source_Form__c, Product_Line__c
+    │
+    ├── Calls: "Call Create Campaign Members Sub Flow"
+    └── Updates Account/Contact if existing record found
+```
+
+This flow was already serving the other Becker webforms. The RFI form submits to the
+same `ExternalWebform__c` object and the same flow fires. **No new flow is needed.**
+
+### What "Create Leads Sub Flow" Currently Maps
+
+| Lead Field | Source on ExternalWebform__c | Status |
+|---|---|---|
+| `FirstName` | `First_Name__c` | ✅ |
+| `LastName` | `Last_Name__c` | ✅ |
+| `Email` | `Email__c` | ✅ |
+| `Phone` | `Phone__c` | ✅ |
+| `Business_Brand__c` | `BusinessBrand__c` | ✅ |
+| `Privacy_Consent_Status__c` | `Privacy_Consent_Status__c` | ✅ |
+| `Product_Line__c` | `Primary_Interest__c` | ✅ |
+| `State` | `Address__StateCode__s` | ✅ |
+| `RecordTypeId` | B2B/B2C lookup by `isB2B` flag | ✅ |
+| `Lead_Source_Form__c` | `Consent_Captured_Source__c` | ⚠️ Wrong for RFI — see below |
+| `Company` | *(not mapped)* | ❌ Needs adding |
+| `RFI_Organization_Type__c` | *(not mapped)* | ❌ Needs adding |
+| `RFI_Org_Size_Category__c` | *(not mapped)* | ❌ Needs adding |
+| `RFI_Role_Type__c` | *(not mapped)* | ❌ Needs adding |
+| `OwnerId` (queue) | *(not mapped)* | ❌ Needs adding |
+
+### Our Custom Flow — CONFLICT, Needs Deactivation
+
+A separate `Becker_RFI_Lead_Routing` flow (v2, ID: `301U700000exNo4IAE`) was deployed
+during development. It fires on the **same trigger** as the existing platform flow and
+would create **duplicate leads** on every RFI submission. It must be deactivated.
+
+**Huma needs to do one thing in Flow Builder UI:**
+> Setup → Flows → "Becker RFI Lead Routing" → Deactivate
+
+API deactivation of an Active flow version is not supported in Salesforce — requires
+human action in the UI. This is a 30-second task.
+
+---
+
+## What Huma Needs to Add to "Create Leads Sub Flow"
+
+These are the exact additions needed in the **Create Leads Sub Flow** (open in Flow Builder,
+save as a new version):
+
+### 1. Fix the Lead_Source_Form__c mapping (existing bug for RFI)
+The subflow currently sets:
+```
+Lead.Lead_Source_Form__c ← External_Web_Form.Consent_Captured_Source__c
+```
+For the RFI form this produces "RFI Form — becker.com/contact-us" on Lead.Lead_Source_Form__c
+which is wrong. Fix to:
+```
+Lead.Lead_Source_Form__c ← External_Web_Form.Lead_Source_Form__c
+```
+(Our form populates `Lead_Source_Form__c` on ExternalWebform__c with values like
+"Contact Us - Buying for Org", "Contact Us - Exploring", etc.)
+
+### 2. Add 4 new field assignments to the Create_Lead element
+```
+Company                   ← External_Web_Form.Company__c
+RFI_Organization_Type__c  ← External_Web_Form.Organization_Type__c
+RFI_Org_Size_Category__c  ← External_Web_Form.Organization_Size__c
+RFI_Role_Type__c          ← External_Web_Form.Role_Type__c
+```
+
+### 3. Add queue assignment after Lead creation
+Add after the `Create_Lead` element:
+
+**New recordLookup — Get Queue:**
+```
+Object: Group
+Filter: DeveloperName = {!External_Web_Form.RFI_Suggested_Queue__c}
+Store in: varQueueGroup
+```
+
+**New decision — Queue Found?**
+```
+If varQueueGroup is not null → go to Update Lead Owner
+Else → end (keep default owner)
+```
+
+**New recordUpdate — Assign Lead to Queue:**
+```
+Object: Lead
+Record ID: {!Create_Lead} (the newly created Lead ID)
+Field: OwnerId = {!varQueueGroup.Id}
+```
+
+The `RFI_Suggested_Queue__c` field on ExternalWebform__c is populated by the Node.js
+routing engine before the record is written to Salesforce. For B2B leads this will
+contain one of: "Global Firms", "New Client Acquisition", "University",
+"International", "Inside Sales", "Customer Success & Expansion".
+For B2C leads it will be empty (no queue assignment needed).
+
+---
+
+## What Is Live in Salesforce Sandbox
+
+### Salesforce Queues — All 6 Created and Linked to Lead
 | Queue Name | Salesforce ID | Lead SObject |
 |---|---|---|
 | Customer Success & Expansion | `00GU7000007dK2rMAE` | ✅ Linked |
@@ -39,237 +143,133 @@ Two live E2E tests were run and passed against the real Salesforce sandbox today
 | New Client Acquisition | `00GU7000007dJy1MAE` | ✅ Linked |
 | University | `00GU7000007dJzdMAE` | ✅ Linked |
 
-All queues have Lead as a supported SObject type (required for queue assignment).
-
-### 3. Custom Fields Created on `ExternalWebform__c`
-| Field API Name | Type | Purpose | Created |
-|---|---|---|---|
-| `RFI_Suggested_Queue__c` | Text(100) | Routing engine output read by the Flow | 2026-04-21 |
-| `Lead_Source_Detail__c` | Text(255) | UTM parameters from form submission | 2026-04-21 |
-
-### 4. Custom Fields Created on `Lead`
-| Field API Name | Type | Values / Notes | Created |
-|---|---|---|---|
-| `RFI_Organization_Type__c` | Picklist | 11 values (Accounting Firm, Corp, etc.) | 2026-04-21 |
-| `RFI_Org_Size_Category__c` | Picklist | `<25`, `26-100`, `101-250`, `251+` | 2026-04-21 |
-| `RFI_Role_Type__c` | Picklist | 10 values (Partner/CEO/CFO, etc.) | 2026-04-21 |
-| `RFI_HQ_State__c` | Text(2) | HQ state for B2B leads | 2026-04-21 |
-| `RFI_Resident_State__c` | Text(2) | Resident state for B2C leads | 2026-04-21 |
-| `RFI_Graduation_Year__c` | Text(4) | For B2C student path | 2026-04-21 |
-| `RFI_Becker_Student_Email__c` | Email | Existing Becker account email | 2026-04-21 |
-| `Lead_Source_Detail__c` | Text(255) | UTM params on Lead record | 2026-04-21 |
-
-> **Note on field naming:** The production field names specified in `SALESFORCE_REQUIREMENTS.md`
-> (e.g., `Organization_Type__c`, `Role_Type__c`) were previously soft-deleted in this sandbox —
-> their developer names are in the SF trash and blocked for reuse for 15 days.
-> Fields were created with `RFI_` prefix. Huma Yousuf should rename these in prod
-> after the 15-day deletion window expires, or create them fresh in prod with the original names.
-
-### 5. PermissionSet — `BeckerRFIFieldAccess`
-- **Status:** Deployed and assigned to Sam Chaudhary's System Admin user
-- **SF ID:** `0PSU7000001IGybOAG`
-- Grants read + edit access to all 11 new RFI fields for System Admin profile
-- Also assigns the permission set to API user so fields are accessible via REST
-
-### 6. Drupal Webform Mapping — `switcher_webform_mapping`
-- **Status:** 20 field mappings configured (via Drupal admin UI + API)
-- **Drupal config UUID:** `33d14f89-b6b5-4e47-bb8c-0252b12d35a2`
-- All core fields mapped: name, email, phone, company, org type, size, role, state, consent
-- 3 fields still on stale-cache workarounds (see Pending section)
-
-### 7. Node.js Application — `lead-processor.js`
-All field name bugs found and fixed in this session:
-
-| Bug | Before | After |
+### Custom Fields on `ExternalWebform__c`
+| Field API Name | Type | Purpose |
 |---|---|---|
-| Wrong field name | `IntentPath__c` | removed — `Lead_Source_Form__c` captures intent |
-| Wrong field name | `SuggestedQueue__c` | `RFI_Suggested_Queue__c` |
-| Wrong field name | `OrganizationType__c` | `Organization_Type__c` |
-| Wrong field name | `RoleType__c` | `Role_Type__c` |
-| Wrong field name | `OrgSizeCategory__c` | `Organization_Size__c` |
-| Wrong field name | `LeadSourceDetail__c` | `Lead_Source_Detail__c` |
-| Wrong picklist value | `Privacy_Consent_Status__c: 'Accepted'` | `'OptIn'` |
-| Wrong picklist value | `Consent_Provided__c: 'Commercial Marketing'` | `'Email'` |
-| Wrong picklist value | `Lead_Source_Form__c: 'Web - Contact Us Form'` | Intent-mapped values |
-| Missing field | (not set) | `Requesting_for__c` set to `'My organization'`/`'Myself'` |
-| Product name mismatch | `'Certified Public Accountant'` | `'CPA'` (via mapping function) |
+| `RFI_Suggested_Queue__c` | Text(100) | Routing engine writes queue name here; Flow reads it |
+| `Lead_Source_Detail__c` | Text(255) | UTM parameters from form submission |
+
+### Custom Fields on `Lead`
+| Field API Name | Type | Notes |
+|---|---|---|
+| `RFI_Organization_Type__c` | Picklist | 11 values (Accounting Firm, Corp, etc.) |
+| `RFI_Org_Size_Category__c` | Picklist | `<25`, `26-100`, `101-250`, `251+` |
+| `RFI_Role_Type__c` | Picklist | 10 values (Partner/CEO/CFO, etc.) |
+| `RFI_HQ_State__c` | Text(2) | HQ state for B2B leads |
+| `RFI_Resident_State__c` | Text(2) | Resident state for B2C leads |
+| `RFI_Graduation_Year__c` | Text(4) | B2C student path |
+| `RFI_Becker_Student_Email__c` | Email | Existing Becker account email |
+| `Lead_Source_Detail__c` | Text(255) | UTM params on Lead record |
+
+> **Field naming note:** These carry an `RFI_` prefix because the original names
+> (e.g. `Organization_Type__c`) were soft-deleted in this sandbox and blocked for
+> 15 days. In production, Huma should create them with the clean names from
+> `SALESFORCE_REQUIREMENTS.md`. The flow additions above reference the `RFI_*` names
+> for sandbox; they'll need updating for prod with the final names.
+
+### PermissionSet — `BeckerRFIFieldAccess`
+- **SF ID:** `0PSU7000001IGybOAG`
+- Grants read + edit on all 8 new RFI custom fields to the API user
+
+### Node.js Routing Engine (`src/routing-engine.js`)
+- 10 org types × 4 employee size buckets = 40 routing rules
+- Outputs queue name → written to `RFI_Suggested_Queue__c` on ExternalWebform__c
+- 23 unit tests passing
 
 ---
 
-## End-to-End Test Results — Run Live 2026-04-21
+## E2E Tests — Run Against Real Sandbox 2026-04-21
 
-### Test 1 — B2B Path (Accounting Firm, 26-100 employees)
+These tests confirmed that ExternalWebform__c → Flow → Lead works end-to-end.
+Note: the tests ran against our now-deprecated `Becker_RFI_Lead_Routing` flow.
+Once Huma adds queue assignment to the existing "Create Leads Sub Flow", new tests
+should be re-run to confirm queue assignment.
+
+### Test 1 — B2B Path
 ```
 Input:  Company=Grant Thornton LLP | OrgType=Accounting Firm | Size=26-100 | CPA
         RFI_Suggested_Queue__c=Global Firms | Requesting_for__c=My organization
 
 ExternalWebform__c ID: a7IU7000004T9IXMA0  ← real record in sandbox
-
-Lead Created:         00QU700000MnhdSMAR
-Lead RecordType:      B2B (012i0000001E3hmAAC) ✅
-Lead Owner (Queue):   Global Firms (00GU7000007dJwPMAU) ✅
-CampaignMember:       701U700000W2j1rIAB ✅
+Lead ID:               00QU700000MnhdSMAR   ← created by flow
+Lead RecordType:       B2B ✅
 ```
 
-### Test 2 — B2C Path (Exploring, individual student)
+### Test 2 — B2C Path
 ```
-Input:  Requesting_for__c=Myself | Primary_Interest__c=CPA
-        Role_Type__c=Undergrad Student | State=OH
+Input:  Requesting_for__c=Myself | Primary_Interest__c=CPA | State=OH
 
 ExternalWebform__c ID: a7IU7000004T9K9MAK  ← real record in sandbox
-
-Lead Created:         00QU700000MniHlMAJ
-Lead RecordType:      B2C (01231000000y0UoAAI) ✅
-Lead Owner (Queue):   Inside Sales (00GU7000007dJunMAE) ✅
+Lead ID:               00QU700000MniHlMAJ   ← created by flow
+Lead RecordType:       B2C ✅
 ```
 
-**Both tests confirmed live against sandbox `becker--bpedevf.sandbox.my.salesforce.com`.**
+---
+
+## What Is Pending — By Owner
+
+### Huma Yousuf (Salesforce) — 2 items
+
+**1. Deactivate `Becker RFI Lead Routing` flow (30 seconds)**
+> Setup → Flows → "Becker RFI Lead Routing" → Deactivate
+> Prevents duplicate lead creation when ExternalWebform__c is inserted.
+
+**2. Add RFI field mappings + queue assignment to "Create Leads Sub Flow" (~30 min)**
+> Full exact spec above in "What Huma Needs to Add" section.
+> After changes: re-run E2E test and verify Lead.OwnerId = queue.
 
 ---
 
-## What Is Pending and Why AI Cannot Do It
+### Nick Leavitt (SFMC) — 1 item
 
-### 1. SFMC Journey Keys — Blocked on Nick Leavitt (SFMC admin)
-**What's missing:** `SFMC_CLIENT_ID`, `SFMC_CLIENT_SECRET`, `SFMC_AUTH_BASE_URL`,
-`SFMC_SUBDOMAIN`, and 11 journey event definition keys in `.env`.
+**SFMC Installed Package credentials + journey event keys**
+- `SFMC_CLIENT_ID`, `SFMC_CLIENT_SECRET`, `SFMC_AUTH_BASE_URL`, `SFMC_SUBDOMAIN`
+- 11 journey event definition keys (one per product interest)
+- Code is written and ready in `src/sfmc-client.js` — fires the moment credentials exist
 
-**Current impact:** Confirmation emails do not send after form submission.
-The SFMC client code is written and ready (`src/sfmc-client.js`). It will
-fire the moment credentials are in `.env`.
-
-**Why AI cannot do this:**
-SFMC credentials require a human to log into Marketing Cloud and create
-an Installed Package (Server-to-Server API integration). The key is shown
-once at creation and cannot be retrieved by API later. Only a Marketing Cloud
-admin with the right account access can do this — no API endpoint exists
-to create or retrieve SFMC app credentials programmatically from outside the UI.
-
-**Owner:** Nick Leavitt (SFMC admin)
-**Action:** Log into MC → Setup → Installed Packages → New → API Integration → Server-to-Server.
-Copy `Client ID`, `Client Secret`, `Authentication Base URI`, `REST Base URI`.
-Then for each journey: Journey Builder → open journey → Settings → Entry Source → copy Event Definition Key.
-Send all to Sam Chaudhary via Slack.
+**Why AI cannot do this:** SFMC Installed Package creation requires UI access to
+Marketing Cloud Setup. The client secret is shown once at creation — only a human
+MC admin can retrieve it.
 
 ---
 
-### 2. Three Drupal Field Mappings — Blocked on Acquia server access
-**What's missing:** Three webform field mappings need `drush cr` (cache rebuild)
-to refresh the Drupal Salesforce Suite module's cached field list from SF.
-The fields exist in Salesforce now but Drupal's cache still shows the old list.
+### Charlene Ceci (DevOps) — 1 item
 
-| Drupal Field | SF Field | Status |
-|---|---|---|
-| `intent_path` | `Lead_Source_Form__c` | ❌ Not mapped — session expired |
-| `is_current_becker_student` | `Is_Current_Becker_Student__c` | ❌ Not mapped — needs drush cr |
-| `hq_state` | `RFI_HQ_State__c` | ⚠ Workaround via `Address__StateCode__s` |
-
-**Note:** `Lead_Source_Form__c` already appears in the Drupal SF Suite field picker (no cache
-flush needed). The `intent_path` mapping just needs to be set to `Lead_Source_Form__c`
-in the Drupal admin UI at:
-`/admin/structure/salesforce/mappings/manage/switcher_webform_mapping/fields`
-
-`Is_Current_Becker_Student__c` still requires `drush cr` first (field not in cache).
-
-**Why AI cannot do this now:**
-The Drupal admin session expired and cannot be renewed programmatically — the
-Drupal admin password was rotated since the last session. A human with active
-Drupal admin credentials must make these two mapping changes.
-
-**Owner:** Sam Chaudhary (or Dakshesh with admin access)
-**Action (2 minutes):**
-1. Log into Drupal admin → `/admin/structure/salesforce/mappings/manage/switcher_webform_mapping/fields`
-2. Find `intent_path` row → change SF Field dropdown to `Lead_Source_Form__c` → Save
-3. Ask Charlene to run `drush cr`, then add `is_current_becker_student → Is_Current_Becker_Student__c`
+**Run `drush cr` on Acquia dev environment**
+- Needed to flush Drupal's SF field cache so `Is_Current_Becker_Student__c` appears
+  in the Drupal Salesforce Suite field picker.
+- `Lead_Source_Form__c` and the other fields are already in cache — only this one field
+  needs the cache flush.
 
 ---
 
-### 4. Drupal Form UX — 3-Step Wizard Not Built
-**What's missing:** The Drupal form at `/form/switcher-webform` is a flat single-page
-form. The Figma design shows a 3-step wizard (intent card → context fields → contact info).
+### Sam Chaudhary (or Dakshesh) — 2 items
 
-**Current impact:** The form works and submits correctly but does not match
-the approved Figma UX. It also lacks conditional fields (B2B vs B2C sections
-shown/hidden based on `Requesting_for` selection).
+**1. Set `intent_path → Lead_Source_Form__c` in Drupal field mapping (2 min)**
+> Log into Drupal admin (requires SSO browser session — CLI login blocked)
+> `/admin/structure/salesforce/mappings/manage/switcher_webform_mapping/fields`
+> Find `intent_path` row → set SF Field = `Lead_Source_Form__c` → Save
 
-**Why AI cannot do this:**
-Multi-step Drupal webform wizard requires configuring Drupal Webform
-module pages (Steps) and conditional logic through the Drupal admin UI.
-This is a Drupal theme and configuration task — it requires someone with
-Drupal theming knowledge and admin access to the Drupal form builder.
-The form field mappings are done; only the presentation layer is pending.
-
-**Owner:** Dakshesh (5X Drupal Team Lead)
-**Action:** Add 3 webform pages (Steps), add conditional display rules
-in the webform settings, and wire the step indicator per Figma design.
+**2. After Charlene runs drush cr:**
+> Add `is_current_becker_student → Is_Current_Becker_Student__c` in same UI
 
 ---
 
-### 5. SFMC Journeys — Not Defined by Nick Leavitt
-**What's missing:** The exact journey names and entry event API keys for
-each product interest (CPA Demo journey, CMA Demo journey, etc.).
+### Dakshesh (Drupal) — 1 item
 
-**Why AI cannot do this:**
-These journeys must be designed and activated in SFMC by a human.
-AI cannot create SFMC journeys — they require defining email templates,
-wait conditions, branching logic, and audience criteria inside Journey Builder,
-which has no fully programmatic creation API for end-to-end journey configuration.
-
-**Owner:** Nick Leavitt (SFMC admin)
+**3-step wizard UX**
+> The Drupal form at `/form/switcher-webform` is a flat form — data maps correctly
+> but visual presentation doesn't match the Figma 3-step wizard design.
+> Requires Drupal Webform module pages + conditional field logic.
+> This is a presentation-layer task — all data plumbing is complete.
 
 ---
 
-### 6. Sandbox → Production Promotion
-**What's missing:** Everything built here is in the dev sandbox
-(`becker--bpedevf.sandbox.my.salesforce.com`). Nothing is in production yet.
+### Prod Deploy — Huma + Charlene
 
-**Why AI cannot do this:**
-Promoting a Salesforce sandbox deployment to production requires:
-1. A Change Set or Metadata API deploy to the production org
-2. Production SF credentials (which Sam does not have — only sandbox credentials
-   are in `.env`)
-3. UAT sign-off from Angel Cichy, Huma Yousuf, and Monica Callahan
-4. A release window from Charlene Ceci
-
-This is a governance and access issue, not a technical one. Once UAT is
-done and credentials are provided, the same Metadata API deploy scripts
-used in this session can promote everything to prod in under 5 minutes.
-
-**Owner:** Huma Yousuf + Charlene Ceci
-**Action:** Provide production Connected App credentials, schedule a release
-window, and run the deploy.
-
----
-
-## Architecture Deployed
-
-```
-becker.com / Drupal
-    │
-    │  POST /services/data/v59.0/sobjects/ExternalWebform__c
-    ▼
-Salesforce ExternalWebform__c
-    │
-    │  Record-Triggered Flow fires on INSERT
-    ▼
-Flow: Becker_RFI_Lead_Routing (301U700000exDqTIAU)
-    │
-    ├── Dedup: Check Lead by email → Update if exists
-    ├── Account lookup: Company name match → use Account Owner
-    ├── B2B path (Requesting_for__c = 'My organization')
-    │     └── Create Lead, RecordType = B2B (012i0000001E3hmAAC)
-    ├── B2C path (Requesting_for__c = 'Myself')
-    │     └── Create Lead, RecordType = B2C (01231000000y0UoAAI)
-    ├── Queue lookup: RFI_Suggested_Queue__c → Group.Id
-    │     └── Fallback: Inside Sales
-    ├── Assign Lead.OwnerId = Queue
-    └── Create CampaignMember (LeadId + Campaign__c)
-
-Node.js Routing Engine (src/routing-engine.js)
-    Input:  orgType × orgSize → queue name
-    Output: RFI_Suggested_Queue__c value written to ExternalWebform__c
-    Matrix: 10 org types × 4 size buckets = 40 routing rules
-    Tests:  23 passing
-```
+Nothing is in production yet. Sandbox is validated.
+To promote: Metadata API deploy (same scripts used today) + prod SF credentials +
+UAT sign-off + Charlene's release window.
 
 ---
 
@@ -278,46 +278,26 @@ Node.js Routing Engine (src/routing-engine.js)
 | File | Purpose | Status |
 |---|---|---|
 | `src/server.js` | Express API — POST /api/submit | ✅ |
-| `src/lead-processor.js` | Orchestrates all layers, builds ExternalWebform__c record | ✅ Fixed today |
-| `src/routing-engine.js` | B2B routing matrix with confidence scoring | ✅ 23 tests pass |
+| `src/lead-processor.js` | Builds ExternalWebform__c record, calls routing engine | ✅ |
+| `src/routing-engine.js` | B2B routing matrix → queue name | ✅ 23 tests pass |
 | `src/sf-client.js` | Salesforce REST API client | ✅ |
-| `src/sfmc-client.js` | SFMC journey trigger client | ⚠ Code ready, credentials missing |
-| `src/email-validator.js` | Spam/bot filter with Hunter.io | ✅ |
-| `client/src/app/App.tsx` | React 3-step wizard (Figma design) | ✅ Builds to public/ |
-| `DRUPAL_EMBED.md` | Integration guide for Dakshesh | ✅ |
-| `SALESFORCE_REQUIREMENTS.md` | Field specs + Flow spec for Huma | ✅ |
+| `src/sfmc-client.js` | SFMC journey trigger client | ⚠ Code ready, no credentials |
+| `src/email-validator.js` | Spam/bot filter + Hunter.io | ✅ |
+| `client/src/app/App.tsx` | React 3-step wizard (Figma design) | ✅ |
+| `DRUPAL_EMBED.md` | Integration guide for Dakshesh | ✅ Updated |
+| `SALESFORCE_REQUIREMENTS.md` | Field specs for Huma | ✅ |
 | `SETUP.md` | Credential setup + go-live checklist | ✅ |
-
----
-
-## Credentials Needed to Go Live
-
-All live in `.env.example`. Values still needed:
-
-| Variable | Who Provides | Status |
-|---|---|---|
-| `SF_CLIENT_ID` | Huma Yousuf (existing Drupal API user Connected App) | ❌ Pending |
-| `SF_CLIENT_SECRET` | Huma Yousuf | ❌ Pending |
-| `SF_INSTANCE_URL` | Huma Yousuf (prod org URL) | ❌ Pending |
-| `SFMC_CLIENT_ID` | Nick Leavitt | ❌ Pending |
-| `SFMC_CLIENT_SECRET` | Nick Leavitt | ❌ Pending |
-| `SFMC_AUTH_BASE_URL` | Nick Leavitt | ❌ Pending |
-| `SFMC_SUBDOMAIN` | Nick Leavitt | ❌ Pending |
-| `HUNTER_API_KEY` | Sam Chaudhary (paid tier for volume) | ⚠ Optional |
-
-Sandbox credentials (`SF_USERNAME`, `SF_PASSWORD`, `SF_SECURITY_TOKEN`) are
-already in `.env` and fully working.
 
 ---
 
 ## Contacts
 
-| Person | Role | What They Owe |
+| Person | Role | Outstanding Action |
 |---|---|---|
-| Huma Yousuf | SF Developer | Provide prod credentials for existing Drupal API Connected App, rename `RFI_*` fields to final names, schedule prod deploy |
-| Angel Cichy | SF Admin | UAT sign-off, confirm dedup rules inactive |
-| Dakshesh | Drupal Team Lead | Build 3-step wizard UX, configure conditional fields |
-| Charlene Ceci | DevOps | Run `drush cr` on Acquia dev, schedule release window |
-| Nick Leavitt | SFMC Admin | SFMC Installed Package credentials + journey event keys |
+| Huma Yousuf | SF Developer | Deactivate old flow + extend Create Leads Sub Flow |
+| Angel Cichy | SF Admin | UAT sign-off |
+| Dakshesh | Drupal Team Lead | 3-step wizard UX |
+| Charlene Ceci | DevOps | `drush cr` on Acquia dev + release window |
+| Nick Leavitt | SFMC Admin | SFMC credentials + journey event keys |
 | Monica Callahan | Business Owner | Final UAT approval |
-| Sam Chaudhary | AI Architect | This document, ongoing build support |
+| Sam Chaudhary | AI Architect | `intent_path` Drupal mapping (2 min) |
