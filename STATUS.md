@@ -159,21 +159,27 @@ The fields exist in Salesforce now but Drupal's cache still shows the old list.
 
 | Drupal Field | SF Field | Status |
 |---|---|---|
-| `intent_path` | `Lead_Source_Form__c` | ❌ Not mapped (cache) |
-| `is_current_becker_student` | `Is_Current_Becker_Student__c` | ❌ Not mapped (cache) |
+| `intent_path` | `Lead_Source_Form__c` | ❌ Not mapped — session expired |
+| `is_current_becker_student` | `Is_Current_Becker_Student__c` | ❌ Not mapped — needs drush cr |
 | `hq_state` | `RFI_HQ_State__c` | ⚠ Workaround via `Address__StateCode__s` |
 
-**Why AI cannot do this:**
-`drush cr` is a server-side shell command that must be run on the Drupal
-application container (Acquia Cloud hosting). There is no HTTP endpoint
-exposed to run arbitrary shell commands for security reasons.
-Every Drupal cache flush endpoint (`/admin/config/development/performance`,
-`/admin/flush`, `/devel/cache/clear`) returns HTTP 403 for this user role.
-The only path is SSH access to the Acquia server or asking Charlene Ceci
-(DevOps) to run `drush cr` on the dev environment.
+**Note:** `Lead_Source_Form__c` already appears in the Drupal SF Suite field picker (no cache
+flush needed). The `intent_path` mapping just needs to be set to `Lead_Source_Form__c`
+in the Drupal admin UI at:
+`/admin/structure/salesforce/mappings/manage/switcher_webform_mapping/fields`
 
-**Owner:** Charlene Ceci (DevOps)
-**Action:** SSH to Acquia dev environment and run: `drush cr`
+`Is_Current_Becker_Student__c` still requires `drush cr` first (field not in cache).
+
+**Why AI cannot do this now:**
+The Drupal admin session expired and cannot be renewed programmatically — the
+Drupal admin password was rotated since the last session. A human with active
+Drupal admin credentials must make these two mapping changes.
+
+**Owner:** Sam Chaudhary (or Dakshesh with admin access)
+**Action (2 minutes):**
+1. Log into Drupal admin → `/admin/structure/salesforce/mappings/manage/switcher_webform_mapping/fields`
+2. Find `intent_path` row → change SF Field dropdown to `Lead_Source_Form__c` → Save
+3. Ask Charlene to run `drush cr`, then add `is_current_becker_student → Is_Current_Becker_Student__c`
 
 ---
 
