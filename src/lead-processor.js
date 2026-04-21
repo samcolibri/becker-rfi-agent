@@ -77,7 +77,7 @@ function buildWebformRecord(submission, suggestedQueue) {
     Address__StateCode__s: state || null,
     email_address_you_use_to_login_to_Becker__c: beckerStudentEmail || null,
     YearInSchool__c: graduationYear || null,
-    BusinessBrand__c: 'Becker Professional Education Corporation',
+    BusinessBrand__c: 'Becker',
     Lead_Source_Form__c: {
       b2b: 'Contact Us - Buying for Org',
       exploring: 'Contact Us - Exploring',
@@ -87,9 +87,9 @@ function buildWebformRecord(submission, suggestedQueue) {
     Lead_Source_Form_Date__c: new Date().toISOString(),
     RFI_Suggested_Queue__c: suggestedQueue || null,
     Lead_Source_Detail__c: utmStr || null,
-    // Consent — values match ExternalWebform__c restricted picklists
-    Consent_Provided__c: consentGiven ? 'Email' : null,
-    Consent_Captured_Source__c: 'RFI Form — becker.com/contact-us',
+    // Consent — multipicklist; all three channels when user opts in
+    Consent_Provided__c: consentGiven ? 'Email;Phone;SMS' : null,
+    Consent_Captured_Source__c: 'Becker Contact Us Form',
     Privacy_Consent_Status__c: privacyConsent ? 'OptIn' : 'NotSeen',
     // Free-text message for support path
     If_other__c: message || null,
@@ -165,7 +165,7 @@ async function processSubmission(submission) {
       programOfInterest: submission.productInterest,
       leadId: created.id,
       leadStatus: mapIntentToStatus(submission.intentPath),
-      brand: 'Becker Professional Education Corporation',
+      brand: 'Becker',
     }).catch(err => log.push(`Confirmation email error (non-fatal): ${err.message}`));
     log.push('SFMC confirmation email triggered');
 

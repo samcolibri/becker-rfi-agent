@@ -120,8 +120,8 @@ async function createCommSubscriptionConsent({ leadId, email, consentGiven }) {
     Email__c: email,
     ConsentGiven__c: consentGiven,
     ConsentCapturedDateTime__c: new Date().toISOString(),
-    ConsentCapturedSource__c: 'RFI Form — becker.com/contact-us',
-    Brand__c: 'Becker Professional Education Corporation',
+    ConsentCapturedSource__c: 'Becker Contact Us Form',
+    Brand__c: 'Becker',
     SubscriptionChannel__c: 'Commercial Marketing',
   });
 }

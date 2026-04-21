@@ -1,11 +1,21 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const cors = require('cors');
 const { processSubmission } = require('./lead-processor');
 const sf = require('./sf-client');
 
 const app = express();
 
+app.use(cors({
+  origin: [
+    /becker\.com$/,
+    /dev\.becker\.com$/,
+    /localhost(:\d+)?$/,
+    /railway\.app$/,
+  ],
+  methods: ['GET', 'POST'],
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));

@@ -12,6 +12,7 @@
     "test:routing": "jest tests/routing-engine.test.js --verbose"
   },
   "dependencies": {
+    "cors": "^2.8.6",
     "dotenv": "^16.4.5",
     "express": "^4.19.2"
   },
