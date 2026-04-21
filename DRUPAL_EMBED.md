@@ -22,24 +22,24 @@ No middleware server. No Railway. Pure Drupal → Salesforce.
 
 | Credential | What It Is | Notes |
 |---|---|---|
-| `SF_CLIENT_ID` | Connected App consumer key | Huma creates Connected App in SF Setup |
-| `SF_CLIENT_SECRET` | Connected App consumer secret | Same Connected App |
+| `SF_CLIENT_ID` | Consumer key from the existing Drupal API Connected App | **No new app needed** — use existing `Drupal B2B Commerce Integration` app already in SF Setup |
+| `SF_CLIENT_SECRET` | Consumer secret | Same existing app |
 | `SF_LOGIN_URL` | Auth endpoint | `https://login.salesforce.com` (prod) / `https://test.salesforce.com` (sandbox) |
 | `SF_INSTANCE_URL` | Org base URL | e.g. `https://colibri.my.salesforce.com` |
 | `ExternalWebform__c` field API names | All custom field names | Huma provides after creating fields |
 
+> **Note for Huma:** No new Connected App is needed. The existing `Drupal B2B Commerce Integration DEVF JWT`
+> Connected App (used by the Drupal Salesforce Suite module today) already has the right OAuth scopes.
+> Dakshesh just needs the Consumer Key and Secret from that app's detail page in SF Setup.
+
 ---
 
-## Step 1 — Huma Creates the Salesforce Connected App
+## Step 1 — Huma Shares Existing Connected App Credentials
 
-In Salesforce Setup → App Manager → New Connected App:
+In Salesforce Setup → App Manager → find `Drupal B2B Commerce Integration`:
 
-- **Enable OAuth Settings:** Yes
-- **Callback URL:** `https://www.becker.com` (or Drupal staging domain)
-- **OAuth Scopes:** `api`, `refresh_token`, `offline_access`
-- **Require Secret for Web Server Flow:** Yes
-
-Huma sends `CLIENT_ID` and `CLIENT_SECRET` to Dakshesh securely.
+- Click **View** → copy `Consumer Key` and `Consumer Secret`
+- Send to Dakshesh securely (do not send via email — use a password manager share or Vault)
 
 ---
 
@@ -68,7 +68,7 @@ Response:
 
 ---
 
-## Step 3 — Submit Form Data to ExternalWebform__c
+## Step 3 — Submit Form Data to ExternalWebform__c  <!-- Steps 3-6 unchanged -->
 
 On form submit, Drupal POSTs to the Salesforce REST API:
 
@@ -83,7 +83,7 @@ Content-Type: application/json
   "Email__c": "jane@example.com",
   "Phone__c": "312-555-0100",
   "Requesting_For__c": "My organization",
-  "Primary_Interest__c": "Certified Public Accountant",
+  "Primary_Interest__c": "CPA",
   "Organization_Type__c": "Accounting Firm",
   "Org_Size_Category__c": "26-100",
   "HQ_State__c": "IL",
@@ -94,9 +94,9 @@ Content-Type: application/json
   "Lead_Source_Form__c": "Web - Contact Us Form",
   "Lead_Source_Form_Date__c": "2026-04-20T14:30:00Z",
   "Lead_Source_Detail__c": "utm_source=google | utm_medium=cpc | utm_campaign=b2b-cpa",
-  "Consent_Provided__c": "Commercial Marketing",
+  "Consent_Provided__c": "Email",
   "Consent_Captured_Source__c": "RFI Form — becker.com/contact-us",
-  "Privacy_Consent_Status__c": "Accepted",
+  "Privacy_Consent_Status__c": "OptIn",
   "Campaign__c": "701VH00000tZOSqYAO"
 }
 ```

@@ -44,7 +44,6 @@ All queues have Lead as a supported SObject type (required for queue assignment)
 ### 3. Custom Fields Created on `ExternalWebform__c`
 | Field API Name | Type | Purpose | Created |
 |---|---|---|---|
-| `RFI_Intent_Path__c` | Text(20) | Stores intent path (b2b/exploring/ready/support) | 2026-04-21 |
 | `RFI_Suggested_Queue__c` | Text(100) | Routing engine output read by the Flow | 2026-04-21 |
 | `Lead_Source_Detail__c` | Text(255) | UTM parameters from form submission | 2026-04-21 |
 
@@ -83,7 +82,7 @@ All field name bugs found and fixed in this session:
 
 | Bug | Before | After |
 |---|---|---|
-| Wrong field name | `IntentPath__c` | `RFI_Intent_Path__c` |
+| Wrong field name | `IntentPath__c` | removed — `Lead_Source_Form__c` captures intent |
 | Wrong field name | `SuggestedQueue__c` | `RFI_Suggested_Queue__c` |
 | Wrong field name | `OrganizationType__c` | `Organization_Type__c` |
 | Wrong field name | `RoleType__c` | `Role_Type__c` |
@@ -130,7 +129,7 @@ Lead Owner (Queue):   Inside Sales (00GU7000007dJunMAE) ✅
 
 ## What Is Pending and Why AI Cannot Do It
 
-### 1. SFMC Journey Keys — Blocked on Nick Leavitt
+### 1. SFMC Journey Keys — Blocked on Nick Leavitt (SFMC admin)
 **What's missing:** `SFMC_CLIENT_ID`, `SFMC_CLIENT_SECRET`, `SFMC_AUTH_BASE_URL`,
 `SFMC_SUBDOMAIN`, and 11 journey event definition keys in `.env`.
 
@@ -153,38 +152,14 @@ Send all to Sam Chaudhary via Slack.
 
 ---
 
-### 2. Connected App for Drupal (prod) — Blocked on Huma Yousuf
-**What's missing:** A Salesforce Connected App for the production org that
-Dakshesh (5X Drupal team) can use to authenticate Drupal → Salesforce REST API.
-
-**Current impact:** The `DRUPAL_EMBED.md` guide is written. Dakshesh needs
-the `CLIENT_ID` and `CLIENT_SECRET` to build the Drupal module configuration.
-
-**Why AI cannot do this:**
-Connected App creation in this sandbox org is blocked by an org-level setting:
-`"You can't create a connected app. To enable connected app creation,
-contact Salesforce Customer Support."` This is an org-wide restriction that
-can only be lifted by a Salesforce org admin via a support ticket, or
-the admin can create the Connected App manually through the Setup UI.
-Even if the sandbox allowed it, the prod Connected App must be created
-in the production org by someone with admin credentials to that org.
-
-**Owner:** Huma Yousuf (Salesforce Developer/Admin)
-**Action:** SF Setup → App Manager → New Connected App.
-Enable OAuth, scopes: `api`, `refresh_token`, `offline_access`.
-Callback URL: Drupal staging domain.
-Send Consumer Key + Secret to Dakshesh securely.
-
----
-
-### 3. Three Drupal Field Mappings — Blocked on Acquia server access
+### 2. Three Drupal Field Mappings — Blocked on Acquia server access
 **What's missing:** Three webform field mappings need `drush cr` (cache rebuild)
 to refresh the Drupal Salesforce Suite module's cached field list from SF.
 The fields exist in Salesforce now but Drupal's cache still shows the old list.
 
 | Drupal Field | SF Field | Status |
 |---|---|---|
-| `intent_path` | `RFI_Intent_Path__c` | ❌ Not mapped (cache) |
+| `intent_path` | `Lead_Source_Form__c` | ❌ Not mapped (cache) |
 | `is_current_becker_student` | `Is_Current_Becker_Student__c` | ❌ Not mapped (cache) |
 | `hq_state` | `RFI_HQ_State__c` | ⚠ Workaround via `Address__StateCode__s` |
 
@@ -315,7 +290,7 @@ All live in `.env.example`. Values still needed:
 
 | Variable | Who Provides | Status |
 |---|---|---|
-| `SF_CLIENT_ID` | Huma Yousuf (Prod Connected App) | ❌ Pending |
+| `SF_CLIENT_ID` | Huma Yousuf (existing Drupal API user Connected App) | ❌ Pending |
 | `SF_CLIENT_SECRET` | Huma Yousuf | ❌ Pending |
 | `SF_INSTANCE_URL` | Huma Yousuf (prod org URL) | ❌ Pending |
 | `SFMC_CLIENT_ID` | Nick Leavitt | ❌ Pending |
@@ -333,7 +308,7 @@ already in `.env` and fully working.
 
 | Person | Role | What They Owe |
 |---|---|---|
-| Huma Yousuf | SF Developer | Prod Connected App credentials, rename `RFI_*` fields to final names, schedule prod deploy |
+| Huma Yousuf | SF Developer | Provide prod credentials for existing Drupal API Connected App, rename `RFI_*` fields to final names, schedule prod deploy |
 | Angel Cichy | SF Admin | UAT sign-off, confirm dedup rules inactive |
 | Dakshesh | Drupal Team Lead | Build 3-step wizard UX, configure conditional fields |
 | Charlene Ceci | DevOps | Run `drush cr` on Acquia dev, schedule release window |

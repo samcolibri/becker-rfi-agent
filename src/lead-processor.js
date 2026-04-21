@@ -70,7 +70,6 @@ function buildWebformRecord(submission, suggestedQueue) {
     Phone__c: phone || null,
     Company__c: orgName || null,
     Primary_Interest__c: toSfProductInterest(productInterest),
-    RFI_Intent_Path__c: intentPath,
     Requesting_for__c: intentPath === 'b2b' ? 'My organization' : 'Myself',
     Organization_Type__c: orgType || null,
     Role_Type__c: roleType || null,
