@@ -424,6 +424,54 @@ Wire this to a Drupal autocomplete field using a custom callback or the Views mo
 
 ---
 
+### Round Robin Rep Assignment
+
+After a lead is assigned to a queue, Salesforce can distribute it to individual reps via round-robin.
+
+**Option 1 — Native SF Assignment Rules (recommended, no code):**
+1. SF Setup → **Lead Assignment Rules** → New Rule
+2. Rule Name: `Becker RFI Round Robin`
+3. Add rule entries — one per queue, set "Assign To" = each rep in the queue in order
+4. SF natively cycles through them in the order listed
+
+**Option 2 — Node.js round-robin (already coded):**
+The routing engine exports `pickRoundRobinRep(queueName)` which rotates reps in 15-minute slots.
+Sam can activate this in `lead-processor.js` once queue members are added in SF.
+
+**Required first step (Angel/Huma):**
+In SF Setup → Queues → each queue below → click **Edit** → Add Members:
+
+| Queue | Reps to add |
+|---|---|
+| Global Firms | Andrea Jennings, Kristin Curcuru, Moira Gordon, Richard Slusz |
+| New Client Acquisition | Angelique Watson, Henry Quinones, Jill Kirkpatrick, Nahal Shafagh, Sara DiGello, Sharice Jessup, Stephanie Anastasio |
+| University | Aaron Gocer, Addie Mitchell, Amy Johnson, Amy Napolski, Angela White, Anthony Quintero, Chandler Lackey, Chantel Garrone, Christian Santiago, Diego Mansilla, Ellen Garner Crawford, Hayley Bales, Jackie Oblinger, Jeffrey Sampson, Kim Holland, Kristine Snyder, Kurtis Williams, Lindsay Sauter, Lisa Easley, Lupe Casillas, Michael Ceglie, Moyrali Roig, Natasha Nurse, Robyn Hampton Peers, Sandy Broadbent, Sharrieff Hazim, Stephen McIntosh |
+| International | Ben Wong, Digvijay Singh, Eduardo Escalante, Manmeet Anand |
+| Inside Sales | Aaron Smith, Andrew Masiewicz, Ashley Griffin, Austin Shields, Brock Batchko, Catalina Gamez, Glenn Proud, Matt Anklam, Matthew Clark, Michelle Mazurek, Ruben Munoz, Sarah Lunday, Stacey Bachara, Tim Carpenter, Zina Fitzgerald |
+| Customer Success & Expansion | Alexandria Reyes, Ashley Stephens, Jenae Klinke, JoAnn Veiga, Laura Copley, Melissa VanFossen, Shaida Hong |
+
+---
+
+### Campaign Association
+
+Campaigns are automatically set per product interest when the form submits. No Drupal action needed — the `Campaign__c` field is populated by the routing engine and the Salesforce flow creates the `CampaignMember` record automatically.
+
+| Product | Campaign ID |
+|---|---|
+| CPA Exam Review | `7013r000001l0CwAAI` |
+| CMA Exam Review | `7013r000001l0DBAAY` |
+| Continuing Professional Education | `7013r000001l0D6AAI` |
+| CIA Exam Review | `701VH00000coo8bYAA` |
+| Enrolled Agent | `701VH00000cnfxAYAQ` |
+| Certified Financial Planner | `701VH00000tZNTXYA4` |
+| Staff Level Training | `701VH00000tZPTiYAO` |
+| CIA Challenge Exam | `701VH00000tZQ6QYAW` |
+| B2B (all products) | `701VH00000tZOSqYAO` |
+
+To add new campaigns: update `B2C_CAMPAIGN_IDS` in `src/lead-processor.js` and add the new Campaign ID.
+
+---
+
 ### Testing Checklist
 
 After build, submit one of each and verify in Salesforce Leads:

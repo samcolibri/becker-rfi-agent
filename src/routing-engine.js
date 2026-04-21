@@ -171,4 +171,41 @@ function routeLead(submission) {
   };
 }
 
-module.exports = { routeLead, routeB2B, routeB2C, normalizeSize, mapProgramToJourney, QUEUES };
+// ─── ROUND ROBIN ──────────────────────────────────────────────────────────────
+// Picks the next rep in a queue using a time-window slot (rotates every 15 min).
+// Stateless — no DB needed. Evenly distributes leads across a working day.
+//
+// SETUP REQUIRED before going live:
+//   1. In SF Setup → Queues → each queue → add members (reps listed in data/sales-reps.json)
+//   2. In SF Setup → Lead Assignment Rules → create rule that reads OwnerId from queue
+//      and optionally enables native SF round-robin within each queue
+//   3. Call pickRoundRobinRep() in lead-processor.js after routing to get a specific rep
+//
+// Campaign association:
+//   Campaign__c is set per product interest in lead-processor.js (B2C) or B2B_CAMPAIGN_ID.
+//   To associate a lead with a campaign in the flow, the Campaign__c field on ExternalWebform__c
+//   is read by the SF flow to create a CampaignMember record automatically.
+//   New campaigns can be added to the B2C_CAMPAIGN_IDS map in lead-processor.js.
+
+const salesReps = require('../data/sales-reps.json');
+
+function pickRoundRobinRep(queueName) {
+  const team = salesReps[queueName];
+  if (!team || !team.reps || team.reps.length === 0) return null;
+
+  // 15-minute slots — each rep gets a full slot before rotating
+  // e.g., 4 reps → rep[0] for :00–:14, rep[1] for :15–:29, etc.
+  const slotMinutes = 15;
+  const minuteOfDay = new Date().getUTCHours() * 60 + new Date().getUTCMinutes();
+  const slot = Math.floor(minuteOfDay / slotMinutes);
+  const repIndex = slot % team.reps.length;
+
+  return {
+    name: team.reps[repIndex],
+    index: repIndex,
+    queueName,
+    reason: `Round robin slot ${slot} → rep ${repIndex + 1}/${team.reps.length}`,
+  };
+}
+
+module.exports = { routeLead, routeB2B, routeB2C, normalizeSize, mapProgramToJourney, QUEUES, pickRoundRobinRep };
