@@ -115,7 +115,7 @@ async function processSubmission(submission) {
     }
     log.push(`Email valid | business: ${emailCheck.isBusiness}`);
 
-    // Step 2: Calculate routing queue (B2B only — we pass result to ExternalWebform)
+    // Step 2: Calculate routing queue and pass to ExternalWebform
     let suggestedQueue = null;
     let routingConfidence = 1.0;
     if (submission.intentPath === 'b2b') {
@@ -128,6 +128,10 @@ async function processSubmission(submission) {
         log.push(`⚠ LOW CONFIDENCE ROUTING: ${(routingResult.ambiguityFlags || []).join(', ')} — route to Inside Sales pending human review`);
         suggestedQueue = 'Inside Sales';
       }
+    } else if (submission.intentPath !== 'support') {
+      // B2C paths (exploring, ready) → CS - Inside Sales
+      suggestedQueue = 'CS - Inside Sales';
+      log.push('Routing: CS - Inside Sales (B2C path)');
     }
 
     // Step 3: Write to ExternalWebform__c

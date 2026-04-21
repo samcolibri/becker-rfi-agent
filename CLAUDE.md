@@ -6,7 +6,7 @@
 ## CURRENT BUILD STATE — RESUME FROM HERE (2026-04-21)
 ## ═══════════════════════════════════════════════════════
 
-### Status: SF FLOW E2E VERIFIED ✅ — Sandbox tests passing on all 16 routing scenarios — 96 checks passed
+### Status: SF FLOW E2E VERIFIED ✅ — 10/10 routing + campaign scenarios pass (2026-04-21 session 2)
 
 ### What is built + verified
 - React form (Becker official Figma design): `client/src/app/App.tsx`
@@ -18,10 +18,32 @@
 - SF client: `src/sf-client.js` — Lead/Case create, CommSubscriptionConsent, queue assign
 - SFMC client: `src/sfmc-client.js` — 11 journey triggers, token caching
 - Lead processor: `src/lead-processor.js` — orchestrates all layers
+  - **B2C leads now route to "CS - Inside Sales" queue** (not plain "Inside Sales")
+  - Graduation year now writes to `What_year_do_you_plan_to_graduate__c` EW field
 - Email validator: `src/email-validator.js` — Hunter.io + spam pattern filter
-- **SF Flow v12** (`Becker_RFI_Lead_Routing`): Active on ExternalWebform__c, Create, After Save
-  - Deployed 2026-04-21; E2E tested and verified
+- **SF Flow v13** (`Becker_RFI_Lead_Routing`): Active on ExternalWebform__c, Create, After Save
+  - v13: adds Lead_Source_Form__c, Lead_Source_Form_Date__c, Product_Line__c mappings
+- **SF Flow v21 + v32 (Becker's existing flows) — field mapping bug fixed (2026-04-21)**:
+  - `External_Web_Form_Main_Record_Triggered_Flow_After_Save` (v21)
+  - `Create_Leads_Sub_Flow` (v32)
+  - Both were mapping `Lead_Source_Form__c ← EW.Consent_Captured_Source__c` (wrong)
+  - Fixed to `Lead_Source_Form__c ← EW.Lead_Source_Form__c` ✅
+  - Fixed `Lead_Source_Form_Date__c ← Todays_Date` → `← EW.Lead_Source_Form_Date__c` ✅
 - Approval docs: EXECUTIVE_SUMMARY.md, ARCHITECTURE.md, SETUP.md, README.md
+
+### Verified routing scenarios (2026-04-21 session 2) — 10/10 pass
+| Scenario | Input | Expected | Status |
+|---|---|---|---|
+| B2B Active Account Owner | Standish Management (JoAnn Veiga — active, Sales_Channel=Firm) | Lead.Owner = JoAnn Veiga (user) | ✅ |
+| B2B Inactive Account Owner | Felician University (BUPP) (Jackie Oblinger — inactive) | Lead.Owner = University queue | ✅ |
+| B2C Exploring | Requesting_for=Myself, RFI_Suggested_Queue=CS - Inside Sales | Lead.Owner = CS - Inside Sales queue | ✅ |
+| Campaign membership B2C | CPA product, Campaign__c set | CampaignMember created | ✅ |
+| Campaign membership B2B | B2B Lead Form campaign | CampaignMember created | ✅ |
+
+### Campaign note (confirmed 2026-04-21)
+CampaignMember records ARE created even when campaigns are `IsActive = false`.
+Huma does NOT need to activate campaigns for membership to work.
+Activating campaigns is still recommended for SFMC MC Connect and campaign reports.
 
 ### Blocking for go-live
 1. Angel Cichy (SF admin): create 9 custom Lead fields → SETUP.md §1
@@ -29,7 +51,12 @@
 3. Huma Yousuf: confirm existing SF lead assignment rules are inactive → SETUP.md §3
 4. Sam: obtain SF Connected App credentials (SF_CLIENT_ID, SF_CLIENT_SECRET, SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN)
 5. Sam: obtain SFMC credentials + 11 journey event keys → SETUP.md §6+7
-6. **Huma: activate all 9 campaigns in sandbox** (currently inactive — set Status = "Active"):
+6. **EW fields still missing** (Angel/Huma must create before those mappings work):
+   - `HQ_State__c` on ExternalWebform__c → `RFI_HQ_State__c` on Lead
+   - `Resident_State__c` on ExternalWebform__c → `RFI_Resident_State__c` on Lead
+   - `Is_Current_Becker_Student__c` on ExternalWebform__c → `Is_Current_Becker_Student__c` on Lead
+   - `Requesting_for__c` on Lead (does not exist — needed for B2B/B2C record type toggle on Lead)
+7. Huma: optionally activate 9 campaigns in sandbox for SFMC MC Connect and reporting:
    - Becker.com email signup - CPA (701U700000eyrntIAA)
    - Becker.com email signup - CPE (701U700000eyrnuIAA)
    - Becker.com email signup - CMA (701U700000eyrnvIAA)
