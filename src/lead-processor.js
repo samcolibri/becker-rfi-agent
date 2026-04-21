@@ -79,7 +79,7 @@ function buildWebformRecord(submission, suggestedQueue) {
     Organization_Size__c: orgSize || null,
     Address__StateCode__s: state || null,
     email_address_you_use_to_login_to_Becker__c: beckerStudentEmail || null,
-    YearInSchool__c: graduationYear || null,
+    What_year_do_you_plan_to_graduate__c: graduationYear || null,
     BusinessBrand__c: 'Becker',
     Lead_Source_Form__c: {
       b2b: 'Contact Us - Buying for Org',
