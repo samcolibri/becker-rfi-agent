@@ -1,6 +1,6 @@
 # Becker RFI Agent — UAT Runbook
-**Last verified:** 2026-04-22 | **Sandbox:** becker--bpedevf.sandbox.my.salesforce.com
-**16/16 E2E scenarios pass** — run `node scripts/test_routing_scenarios.js` to re-verify any time
+**Last verified:** 2026-04-22 (v16) | **Sandbox:** becker--bpedevf.sandbox.my.salesforce.com
+**21/21 E2E scenarios pass** — run `node scripts/test_routing_scenarios.js` to re-verify any time
 
 ---
 
@@ -170,7 +170,59 @@ All steps below are automated by this script. Manual verification steps also sho
 
 **Verify in SF:**
 1. Open Contact_Us_Form__c tab → find record by email
-2. Confirm all fields populated, Query Type = Support
+2. Confirm all fields populated, Query Type = Support, State = IL, City = Chicago
+
+---
+
+### STEP 11 — B2B Org Type + Org Size → Lead (v16 fix)
+**What it tests:** Organization Type and Org Size set on the form flow through to dedicated Lead fields. These were blank prior to v16 because they only existed in the Create paths (which never run — v21/v32 creates the Lead first).
+
+**Input:**
+- Requesting for: `My organization`
+- Org Type: `Consulting Firm`
+- Size: `101-250`
+
+**Expected outcome:**
+- ✅ Lead.RFI_Organization_Type__c = `Consulting Firm`
+- ✅ Lead.RFI_Org_Size_Category__c = `101-250`
+
+---
+
+### STEP 12 — B2B Subscription_id__c → Lead (v16 fix)
+**What it tests:** B2B leads get the correct subscription IDs populated on the Lead record. Previously blank because EW.CommunicationSubscription__c was not being set, so the CDM - Lead Trigger Flow had no records to read.
+
+**Input:**
+- Requesting for: `My organization`
+- EW.CommunicationSubscription__c: `B2B - News and Events;B2B - Events;B2B - New Products` (set by Node.js)
+
+**Expected outcome:**
+- ✅ Lead.Subscription_id__c contains `B2B - News and Events`, `B2B - Events`, `B2B - New Products` (order may vary — multipicklist)
+
+---
+
+### STEP 13 — B2C Subscription_id__c → Lead (v16 verified)
+**What it tests:** B2C leads get product-specific subscription IDs on the Lead record.
+
+**Input:**
+- Requesting for: `Myself`
+- Product: `CPA`
+- EW.CommunicationSubscription__c: `CPA Content;CPA Promotions` (set by Node.js)
+
+**Expected outcome:**
+- ✅ Lead.Subscription_id__c = `CPA Promotions;CPA Content` (order set by picklist definition)
+
+---
+
+### STEP 14 — B2C routing → CS - Inside Sales (not Inside Sales) (v16 verified)
+**What it tests:** All B2C leads (Myself path) route to CS - Inside Sales queue, not the plain Inside Sales queue.
+
+**Input:**
+- Requesting for: `Myself`
+- RFI_Suggested_Queue__c: `CS - Inside Sales`
+
+**Expected outcome:**
+- ✅ Lead.OwnerId = CS - Inside Sales queue (`00G3r000005Z3dLEAS`)
+- ✅ NOT `Inside Sales` queue
 
 ---
 
@@ -197,7 +249,7 @@ All steps below are automated by this script. Manual verification steps also sho
 
 | Flow | Version | Last Changed | Status |
 |---|---|---|---|
-| `Becker_RFI_Lead_Routing` | v15 | 2026-04-22 | ✅ Active |
+| `Becker_RFI_Lead_Routing` | v16 | 2026-04-22 | ✅ Active |
 | `External_Web_Form_Main_Record_Triggered_Flow_After_Save` | v22 | 2026-04-22 | ✅ Active |
 | `Create_Leads_Sub_Flow` | patched | 2026-04-21 | ✅ Active |
 
@@ -258,12 +310,14 @@ All steps below are automated by this script. Manual verification steps also sho
 
 ## Blockers Before Go-Live
 
-| # | Owner | Item |
-|---|---|---|
-| 1 | **Sam** | SF Connected App credentials for prod (SF_CLIENT_ID, SF_CLIENT_SECRET, SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN) |
-| 2 | **Sam** | SFMC credentials + 11 journey event keys → SETUP.md §6+7 |
-| 3 | **Angel Cichy** | Confirm 7 SF queue API names match prod → SETUP.md §2 |
-| 4 | **Huma Yousuf** | Confirm existing lead assignment rules are inactive in prod → SETUP.md §3 |
+| # | Owner | Item | Status |
+|---|---|---|---|
+| 1 | **Sam** | SF Connected App credentials for prod | ⏳ Pending |
+| 2 | **Sam** | SFMC credentials + 11 journey event keys → SETUP.md §6+7 | ⏳ Pending |
+| 3 | **Angel Cichy** | Confirm 7 SF queue API names match prod → SETUP.md §2 | ⏳ Pending |
+| 4 | **Huma Yousuf** | Confirm existing lead assignment rules are inactive in prod → SETUP.md §3 | ⏳ Pending |
+| 5 | **Drupal team** | Deploy Node.js server to Railway (or Azure) + configure CORS for becker.com domain | ⏳ Pending |
+| 6 | **Drupal team (Dakshesh)** | Option 1: Add iFrame block to becker.com/contact-us pointing to hosted form URL | ⏳ In evaluation |
 
 ---
 
