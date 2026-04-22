@@ -146,6 +146,28 @@ async function assignLeadToRep(leadId, repName) {
   return sfRequest('PATCH', `/sobjects/Lead/${leadId}`, { OwnerId: userId });
 }
 
+// Create Contact_Us_Form__c record for support path
+async function createContactUsForm({ firstName, lastName, email, phone, country, city, state, productInterest, message, consentGiven, privacyConsent }) {
+  return sfRequest('POST', '/sobjects/Contact_Us_Form__c', {
+    First_Name__c: firstName,
+    Last_Name__c: lastName,
+    Email__c: email,
+    Phone__c: phone || null,
+    Country__c: country || null,
+    City__c: city || null,
+    State__c: state || null,
+    I_would_like_to_hear_more_about__c: productInterest || null,
+    Please_tell_us_about_your_question__c: message || null,
+    Query_Type__c: 'Support',
+    Lead_Source_Form__c: 'Customer Service - Contact Us',
+    Lead_Source_Form_Date__c: new Date().toISOString(),
+    Business_Brand__c: 'Becker',
+    Consent_Provided__c: consentGiven ? 'Email;Phone;SMS' : null,
+    Consent_Captured_Source__c: 'Becker Contact Us Form',
+    Privacy_Consent_Status__c: privacyConsent ? 'OptIn' : 'NotSeen',
+  });
+}
+
 // Create a SF Case for student support path (image 12: support creates Case not Lead)
 async function createCase({ firstName, lastName, email, topic, product, message, leadSource }) {
   return sfRequest('POST', '/sobjects/Case', {
@@ -179,6 +201,7 @@ module.exports = {
   createCommSubscriptionConsent,
   assignLeadToQueue,
   assignLeadToRep,
+  createContactUsForm,
   createCase,
   assignCaseToQueue,
 };

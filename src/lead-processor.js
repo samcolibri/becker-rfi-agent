@@ -137,14 +137,25 @@ async function processSubmission(submission) {
       log.push('Routing: CS - Inside Sales (B2C path)');
     }
 
-    // Step 3: Write to ExternalWebform__c
-    // SF Flow (CreateCaseLeadandOpportunity.v2) fires automatically and handles:
-    //   - Dedup by email (update existing Lead vs create new)
-    //   - Person Account match → Opportunity
-    //   - Business Account match → Lead + Opportunity (both → BA Owner)
-    //   - Support Query → Case → CS&E Queue
-    //   - Sales Query → Lead → assign to SuggestedQueue__c
-    //   - Campaign membership (once Nick Leavitt defines campaigns)
+    // Step 3a: Support path → also write to Contact_Us_Form__c (existing support form object)
+    if (submission.intentPath === 'support') {
+      const cuf = await sf.createContactUsForm({
+        firstName: submission.firstName,
+        lastName: submission.lastName,
+        email: submission.email,
+        phone: submission.phone,
+        country: submission.country,
+        city: submission.city,
+        state: submission.state,
+        productInterest: submission.productInterest,
+        message: submission.message,
+        consentGiven: submission.consentGiven,
+        privacyConsent: submission.privacyConsent,
+      });
+      log.push(`Contact_Us_Form__c created: ${cuf.id}`);
+    }
+
+    // Step 3b: Write to ExternalWebform__c — SF Flow handles dedup, Lead/Case creation, queue assign
     const webformRecord = buildWebformRecord(submission, suggestedQueue);
     const created = await sf.createExternalWebform(webformRecord);
     log.push(`ExternalWebform__c created: ${created.id} — SF Flow will process`);

@@ -6,7 +6,7 @@
 ## CURRENT BUILD STATE — RESUME FROM HERE (2026-04-21)
 ## ═══════════════════════════════════════════════════════
 
-### Status: SF FLOW E2E VERIFIED ✅ — All field mappings + routing scenarios confirmed (2026-04-21 session 3)
+### Status: SF FLOW E2E VERIFIED ✅ — 16/16 pass (2026-04-22 session 4)
 
 ### What is built + verified
 - React form (Becker official Figma design): `client/src/app/App.tsx`
@@ -15,25 +15,26 @@
   - Builds to `public/` via `npm run build:client`
 - Express API: `src/server.js` — POST /api/submit, GET /api/accounts, GET /health
 - B2B routing engine: `src/routing-engine.js` — 27 unit tests, 6 SF queues
-- SF client: `src/sf-client.js` — Lead/Case create, CommSubscriptionConsent, queue assign
+- SF client: `src/sf-client.js` — Lead/Case/Contact_Us_Form__c create, CommSubscriptionConsent, queue assign
 - SFMC client: `src/sfmc-client.js` — 11 journey triggers, token caching
 - Lead processor: `src/lead-processor.js` — orchestrates all layers
   - **B2C leads now route to "CS - Inside Sales" queue** (not plain "Inside Sales")
   - Graduation year now writes to `What_year_do_you_plan_to_graduate__c` EW field
 - Email validator: `src/email-validator.js` — Hunter.io + spam pattern filter
-- **SF Flow v14** (`Becker_RFI_Lead_Routing`): Active on ExternalWebform__c, Create, After Save
-  - v13: adds Lead_Source_Form__c, Lead_Source_Form_Date__c, Product_Line__c mappings
-  - v14 (2026-04-21): adds HQ_State__c, Resident_State__c, Is_Current_Becker_Student__c mappings;
-    fixes RFI_HQ_State__c source (was Address__StateCode__s → now EW.HQ_State__c)
-- **SF Flow v21 + v32 (Becker's existing flows) — field mapping bug fixed (2026-04-21)**:
-  - `External_Web_Form_Main_Record_Triggered_Flow_After_Save` (v21)
-  - `Create_Leads_Sub_Flow` (v32)
-  - Both were mapping `Lead_Source_Form__c ← EW.Consent_Captured_Source__c` (wrong)
-  - Fixed to `Lead_Source_Form__c ← EW.Lead_Source_Form__c` ✅
-  - Fixed `Lead_Source_Form_Date__c ← Todays_Date` → `← EW.Lead_Source_Form_Date__c` ✅
+- **SF Flow v15** (`Becker_RFI_Lead_Routing`): Active on ExternalWebform__c, Create, After Save
+  - v13: Lead_Source_Form__c, Lead_Source_Form_Date__c, Product_Line__c mappings
+  - v14 (2026-04-22): HQ_State__c, Resident_State__c, Is_Current_Becker_Student__c; RFI_HQ_State__c source fixed
+  - v15 (2026-04-22): Lead_Source_Detail__c (UTM) mapped to all 3 Lead write paths
+- **SF Flow v21** (`External_Web_Form_Main_Record_Triggered_Flow_After_Save`) — fixed twice:
+  - Lead_Source_Form__c source bug fixed (2026-04-21)
+  - B2B detection fixed (2026-04-22): Check_If_B2B now checks `Requesting_for__c = 'My organization'`
+    (was only checking CDM label, so B2B leads from our form got B2C RecordTypeId — now fixed)
+- **SF Flow v32** (`Create_Leads_Sub_Flow`): Lead_Source_Form__c source bug fixed (2026-04-21)
+- **Support form**: `src/sf-client.js` + `src/lead-processor.js` — support path now creates
+  `Contact_Us_Form__c` record with all 8 mapped fields + Query_Type__c=Support
 - Approval docs: EXECUTIVE_SUMMARY.md, ARCHITECTURE.md, SETUP.md, README.md
 
-### Verified scenarios — all pass
+### Verified scenarios — all pass (16/16 as of 2026-04-22)
 | Scenario | Input | Expected | Status |
 |---|---|---|---|
 | B2B Active Account Owner | Standish Management (JoAnn Veiga — active, Sales_Channel=Firm) | Lead.Owner = JoAnn Veiga (user) | ✅ |
@@ -44,6 +45,10 @@
 | B2B HQ_State__c | EW.HQ_State__c=TX | Lead.HQ_State__c=TX, Lead.RFI_HQ_State__c=TX | ✅ v14 |
 | B2C Resident_State__c | EW.Resident_State__c=CA | Lead.Resident_State__c=CA | ✅ v14 |
 | B2C Is_Current_Becker_Student__c | EW.Is_Current_Becker_Student__c=true | Lead.Is_Current_Becker_Student__c=true | ✅ v14 |
+| B2B RecordTypeId | Requesting_for__c=My organization | Lead.RecordTypeId=B2B (012i0000001E3hmAAC) | ✅ v21 fix |
+| B2B Lead_Source_Detail__c | UTM params set on EW | Lead.Lead_Source_Detail__c populated | ✅ v15 |
+| B2C Lead_Source_Detail__c | UTM params set on EW | Lead.Lead_Source_Detail__c populated | ✅ v15 |
+| Support form → Contact_Us_Form__c | Support submission | Contact_Us_Form__c created with all 8 fields | ✅ |
 
 ### Campaign note (confirmed 2026-04-21)
 CampaignMember records ARE created even when campaigns are `IsActive = false`.
