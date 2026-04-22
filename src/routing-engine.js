@@ -4,7 +4,7 @@ const territoriesData = require('../data/territories.json');
 const QUEUES = {
   CS_EXPANSION: 'Customer Success & Expansion',
   GLOBAL_FIRMS: 'Global Firms',
-  INSIDE_SALES: 'Inside Sales',
+  INSIDE_SALES: 'CS - Inside Sales',
   INTERNATIONAL: 'International',
   NCA: 'New Client Acquisition',
   UNIVERSITY: 'University',
@@ -49,7 +49,7 @@ function routeB2B({ orgType, employeeCount, state, existingAccountOwner, account
     return {
       queue: QUEUES.INSIDE_SALES,
       rep: null,
-      reason: `Unknown org type "${orgType}" — defaulting to Inside Sales`
+      reason: `Unknown org type "${orgType}" — defaulting to CS - Inside Sales`
     };
   }
 
@@ -73,7 +73,7 @@ function routeB2B({ orgType, employeeCount, state, existingAccountOwner, account
     ambiguityFlags.push('org_type_unknown_or_other');
   }
   if (!employeeCount || normalizedSize === '<25') {
-    // Smallest bucket — many org types default to Inside Sales here, verify
+    // Smallest bucket — many org types default to CS - Inside Sales here, verify
     confidence -= 0.1;
   }
   if (!matrix) {

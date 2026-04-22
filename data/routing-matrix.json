@@ -1,12 +1,12 @@
 {
   "Accounting Firm": {
-    "<25": "Inside Sales",
+    "<25": "CS - Inside Sales",
     "26-100": "Global Firms",
     "101-250": "Global Firms",
     "251+": "Global Firms"
   },
   "Corporation/Healthcare/Bank/Financial Institution": {
-    "<25": "Inside Sales",
+    "<25": "CS - Inside Sales",
     "26-100": "New Client Acquisition",
     "101-250": "New Client Acquisition",
     "251+": "New Client Acquisition"
@@ -24,7 +24,7 @@
     "251+": "Global Firms"
   },
   "Government Agency/Not for Profit Organization": {
-    "<25": "Inside Sales",
+    "<25": "CS - Inside Sales",
     "26-100": "New Client Acquisition",
     "101-250": "New Client Acquisition",
     "251+": "New Client Acquisition"
@@ -42,10 +42,10 @@
     "251+": "International"
   },
   "Student": {
-    "<25": "Inside Sales",
-    "26-100": "Inside Sales",
-    "101-250": "Inside Sales",
-    "251+": "Inside Sales"
+    "<25": "CS - Inside Sales",
+    "26-100": "CS - Inside Sales",
+    "101-250": "CS - Inside Sales",
+    "251+": "CS - Inside Sales"
   },
   "University": {
     "<25": "University",
@@ -54,9 +54,9 @@
     "251+": "University"
   },
   "Other": {
-    "<25": "Inside Sales",
-    "26-100": "Inside Sales",
-    "101-250": "Inside Sales",
-    "251+": "Inside Sales"
+    "<25": "CS - Inside Sales",
+    "26-100": "CS - Inside Sales",
+    "101-250": "CS - Inside Sales",
+    "251+": "CS - Inside Sales"
   }
 }

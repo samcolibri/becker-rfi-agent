@@ -144,13 +144,13 @@ async function processSubmission(submission) {
     let routingConfidence = 1.0;
     if (submission.intentPath === 'b2b') {
       const routingResult = routeLead(submission);
-      suggestedQueue = routingResult.queue || 'Inside Sales';
+      suggestedQueue = routingResult.queue || 'CS - Inside Sales';
       routingConfidence = routingResult.confidence ?? 1.0;
       log.push(`Routing: ${suggestedQueue} (${routingResult.reason}) confidence=${routingConfidence.toFixed(2)}`);
       // arxiv:2406.03441 — low confidence leads flagged for human review
       if (routingResult.requiresHumanReview) {
-        log.push(`⚠ LOW CONFIDENCE ROUTING: ${(routingResult.ambiguityFlags || []).join(', ')} — route to Inside Sales pending human review`);
-        suggestedQueue = 'Inside Sales';
+        log.push(`⚠ LOW CONFIDENCE ROUTING: ${(routingResult.ambiguityFlags || []).join(', ')} — route to CS - Inside Sales pending human review`);
+        suggestedQueue = 'CS - Inside Sales';
       }
     } else if (submission.intentPath !== 'support') {
       // B2C paths (exploring, ready) → CS - Inside Sales

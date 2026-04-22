@@ -10,7 +10,7 @@ test('normalizeSize: handles null', () => expect(normalizeSize(null)).toBe('<25'
 
 // -- B2B routing matrix --
 describe('Accounting Firm routing', () => {
-  test('<25 → Inside Sales', () => {
+  test('<25 → CS - Inside Sales', () => {
     expect(routeB2B({ orgType: 'Accounting Firm', employeeCount: '<25' }).queue).toBe(QUEUES.INSIDE_SALES);
   });
   test('26-100 → Global Firms', () => {
@@ -25,7 +25,7 @@ describe('Accounting Firm routing', () => {
 });
 
 describe('Corporation routing', () => {
-  test('<25 → Inside Sales', () => {
+  test('<25 → CS - Inside Sales', () => {
     const r = routeB2B({ orgType: 'Corporation/Healthcare/Bank/Financial Institution', employeeCount: '<25' });
     expect(r.queue).toBe(QUEUES.INSIDE_SALES);
   });
@@ -64,10 +64,10 @@ describe('Non-US Organization routing', () => {
 });
 
 describe('Fallback routing', () => {
-  test('Unknown org type → Inside Sales', () => {
+  test('Unknown org type → CS - Inside Sales', () => {
     expect(routeB2B({ orgType: 'Something Unknown', employeeCount: '251+' }).queue).toBe(QUEUES.INSIDE_SALES);
   });
-  test('Other → Inside Sales always', () => {
+  test('Other → CS - Inside Sales always', () => {
     ['<25','26-100','101-250','251+'].forEach(size => {
       expect(routeB2B({ orgType: 'Other', employeeCount: size }).queue).toBe(QUEUES.INSIDE_SALES);
     });

@@ -1,0 +1,130 @@
+# Salesforce Mapping Configuration
+# Drupal Entity: webform_submission / becker_rfi
+# Salesforce Object: ExternalWebform__c
+#
+# Use this as reference when configuring via Admin UI:
+# Admin → Salesforce → Mappings → Add Mapping
+#
+# mapping_id: becker_rfi_ew
+# label: Becker RFI → ExternalWebform__c
+# drupal_entity_type: webform_submission
+# drupal_bundle: becker_rfi
+# salesforce_object: ExternalWebform__c
+# sync_triggers: on_create (push only — no pull needed)
+
+field_mappings:
+
+  # ── Identity ──────────────────────────────────────────────────────────────
+  - webform_field: first_name
+    sf_field: First_Name__c
+    direction: drupal_sf
+
+  - webform_field: last_name
+    sf_field: Last_Name__c
+    direction: drupal_sf
+
+  - webform_field: email
+    sf_field: Email__c
+    direction: drupal_sf
+
+  - webform_field: phone
+    sf_field: Phone__c
+    direction: drupal_sf
+
+  # ── Routing & Intent ──────────────────────────────────────────────────────
+  - webform_field: requesting_for
+    sf_field: Requesting_for__c
+    direction: drupal_sf
+    # Values: "Myself" | "My organization"
+
+  - webform_field: product_interest
+    sf_field: Primary_Interest__c
+    direction: drupal_sf
+    # e.g. "Certified Public Accountant"
+
+  - webform_field: lead_source_form
+    sf_field: Lead_Source_Form__c
+    direction: drupal_sf
+    # Computed — e.g. "Contact Us - Exploring"
+
+  # ── B2B Fields ────────────────────────────────────────────────────────────
+  - webform_field: company
+    sf_field: Company__c
+    direction: drupal_sf
+
+  - webform_field: org_type
+    sf_field: Organization_Type__c
+    direction: drupal_sf
+    # e.g. "Accounting Firm"
+
+  - webform_field: org_size
+    sf_field: Organization_Size__c
+    direction: drupal_sf
+    # e.g. "26-100"
+
+  - webform_field: hq_state
+    sf_field: HQ_State__c
+    direction: drupal_sf
+
+  # ── B2C Fields ────────────────────────────────────────────────────────────
+  - webform_field: state_of_residence
+    sf_field: Resident_State__c
+    direction: drupal_sf
+
+  - webform_field: is_current_becker_student
+    sf_field: Is_Current_Becker_Student__c
+    direction: drupal_sf
+    # boolean checkbox
+
+  - webform_field: becker_account_email
+    sf_field: email_address_you_use_to_login_to_Becker__c
+    direction: drupal_sf
+
+  - webform_field: graduation_year
+    sf_field: What_year_do_you_plan_to_graduate__c
+    direction: drupal_sf
+
+  # ── Shared ────────────────────────────────────────────────────────────────
+  - webform_field: role_type
+    sf_field: Role_Type__c
+    direction: drupal_sf
+
+  - webform_field: message
+    sf_field: If_other__c
+    direction: drupal_sf
+
+  # ── System / Computed ─────────────────────────────────────────────────────
+  - webform_field: business_brand
+    sf_field: BusinessBrand__c
+    direction: drupal_sf
+    # Always "Becker"
+
+  - webform_field: lead_source_detail
+    sf_field: Lead_Source_Detail__c
+    direction: drupal_sf
+    # Computed UTM string: "utm_source=x | utm_medium=y | ..."
+
+  - webform_field: comm_subscription
+    sf_field: CommunicationSubscription__c
+    direction: drupal_sf
+    # Computed — e.g. "CPA Content;CPA Promotions"
+
+  - webform_field: campaign_id
+    sf_field: Campaign__c
+    direction: drupal_sf
+    # Computed campaign ID — UPDATE THESE IDs FOR PRODUCTION
+    # Dev sandbox IDs are hardcoded in the webform elements YAML
+
+  - webform_field: consent_provided_value
+    sf_field: Consent_Provided__c
+    direction: drupal_sf
+    # Computed — "Email" if marketing_consent checked, else blank
+
+  - webform_field: privacy_consent_value
+    sf_field: Privacy_Consent_Status__c
+    direction: drupal_sf
+    # Computed — "OptIn" | "NotSeen"
+
+  # ── NOT mapped (computed by SF Flow v20) ──────────────────────────────────
+  # RFI_Suggested_Queue__c  — computed by Becker_RFI_Lead_Routing flow from org_type × org_size
+  # Lead_Source_Form_Date__c — set to NOW() by SF flow

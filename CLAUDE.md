@@ -72,8 +72,7 @@ Activating campaigns is still recommended for SFMC MC Connect and campaign repor
 All fields below exist in sandbox and are mapped in v14 flow. Smoke tested ✅.
 | EW Field | Type | Lead Field | Type | Status |
 |---|---|---|---|---|
-| HQ_State__c | text(100) | HQ_State__c | text(2) | ✅ v14 — B2B path |
-| HQ_State__c | text(100) | RFI_HQ_State__c | text(2) | ✅ v14 — fixed (was Address__StateCode__s) |
+| HQ_State__c | text(100) | RFI_HQ_State__c | text(2) | ✅ v18 — B2B path only. Removed duplicate HQ_State__c target (v18) |
 | Resident_State__c | text(100) | Resident_State__c | text(2) | ✅ v14 — B2C path |
 | Is_Current_Becker_Student__c | boolean | Is_Current_Becker_Student__c | boolean | ✅ v14 |
 | Requesting_for__c | picklist | (no Lead field) | — | N/A — field only on EW, not Lead |

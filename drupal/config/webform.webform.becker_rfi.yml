@@ -1,0 +1,471 @@
+langcode: en
+status: open
+dependencies:
+  module:
+    - webform
+id: becker_rfi
+open: null
+close: null
+weight: 0
+uid: 0
+template: false
+archive: false
+title: 'Becker - Contact Us'
+description: 'Becker RFI multi-path contact form. Routes B2B leads by org type × size. B2C leads to CS - Inside Sales.'
+categories: []
+elements: |
+  requesting_for:
+    '#type': radios
+    '#title': 'Who are you requesting information for?'
+    '#options':
+      Myself: 'For Myself'
+      'My organization': 'For My Organization'
+    '#required': true
+    '#options_display': side_by_side
+  lead_source_intent:
+    '#type': radios
+    '#title': 'What would you like to do?'
+    '#options':
+      Exploring: 'I am exploring my options'
+      'Ready to Enroll': 'I am ready to enroll'
+      Support: 'I need student support'
+    '#required': true
+    '#states':
+      visible:
+        ':input[name="requesting_for"]':
+          value: Myself
+      required:
+        ':input[name="requesting_for"]':
+          value: Myself
+    '#options_display': side_by_side
+  product_interest:
+    '#type': select
+    '#title': 'Program of Interest'
+    '#options':
+      'Certified Public Accountant': 'Certified Public Accountant (CPA)'
+      'Continuing Professional Education': 'Continuing Professional Education (CPE)'
+      'Certified Management Accountant': 'Certified Management Accountant (CMA)'
+      'Enrolled Agent': 'Enrolled Agent (EA)'
+      'Certified Internal Auditor': 'Certified Internal Auditor (CIA)'
+      'Certified Financial Planner': 'Certified Financial Planner (CFP)'
+      'Staff Level Training': 'Staff Level Training'
+      'CIA Challenge Exam': 'CIA Challenge Exam'
+    '#empty_option': '- Select a program -'
+    '#required': true
+    '#states':
+      invisible:
+        ':input[name="lead_source_intent"]':
+          value: Support
+  first_name:
+    '#type': textfield
+    '#title': 'First Name'
+    '#required': true
+    '#title_display': invisible
+    '#placeholder': 'First Name *'
+  last_name:
+    '#type': textfield
+    '#title': 'Last Name'
+    '#required': true
+    '#title_display': invisible
+    '#placeholder': 'Last Name *'
+  email:
+    '#type': email
+    '#title': 'Email Address'
+    '#required': true
+    '#title_display': invisible
+    '#placeholder': 'Email Address *'
+  phone:
+    '#type': tel
+    '#title': 'Phone Number'
+    '#title_display': invisible
+    '#placeholder': 'Phone Number'
+  company:
+    '#type': textfield
+    '#title': 'Organization Name'
+    '#title_display': invisible
+    '#placeholder': 'Organization Name *'
+    '#states':
+      visible:
+        ':input[name="requesting_for"]':
+          value: 'My organization'
+      required:
+        ':input[name="requesting_for"]':
+          value: 'My organization'
+  org_type:
+    '#type': select
+    '#title': 'Organization Type'
+    '#options':
+      'Accounting Firm': 'Accounting Firm'
+      'Corporation/Healthcare/Bank/Financial Institution': 'Corporation / Healthcare / Bank / Financial Institution'
+      'Consulting Firm': 'Consulting Firm'
+      'CPA Alliance': 'CPA Alliance'
+      'Government Agency/Not for Profit Organization': 'Government Agency / Not for Profit Organization'
+      'Society/Chapter': 'Society / Chapter'
+      'Non-US Organization': 'Non-US Organization'
+      'Student': 'Student'
+      'University': 'University'
+      'Other': 'Other'
+    '#empty_option': '- Organization Type *'
+    '#states':
+      visible:
+        ':input[name="requesting_for"]':
+          value: 'My organization'
+      required:
+        ':input[name="requesting_for"]':
+          value: 'My organization'
+  org_size:
+    '#type': select
+    '#title': 'Number of Employees'
+    '#options':
+      '<25': 'Fewer than 25'
+      '26-100': '26 – 100'
+      '101-250': '101 – 250'
+      '251+': '251+'
+    '#empty_option': '- Number of Employees *'
+    '#states':
+      visible:
+        ':input[name="requesting_for"]':
+          value: 'My organization'
+      required:
+        ':input[name="requesting_for"]':
+          value: 'My organization'
+  hq_state:
+    '#type': textfield
+    '#title': 'Headquarters State / Province'
+    '#title_display': invisible
+    '#placeholder': 'Headquarters State / Province'
+    '#states':
+      visible:
+        ':input[name="requesting_for"]':
+          value: 'My organization'
+  role_type:
+    '#type': select
+    '#title': 'Role Type'
+    '#options':
+      'Undergrad Student': 'Undergrad Student'
+      'Grad Student': 'Grad Student'
+      'Professor': 'Professor'
+      'Supervisor/Director/Manager': 'Supervisor / Director / Manager'
+      'Partner/CEO/CFO': 'Partner / CEO / CFO'
+      'Administrator': 'Administrator'
+      'Unemployed': 'Unemployed'
+      'Learning/Training Leader': 'Learning / Training Leader'
+      'Staff Accountant': 'Staff Accountant'
+      'Other': 'Other'
+    '#empty_option': '- Role Type -'
+  state_of_residence:
+    '#type': textfield
+    '#title': 'State / Province of Residence'
+    '#title_display': invisible
+    '#placeholder': 'State / Province of Residence'
+    '#states':
+      visible:
+        ':input[name="requesting_for"]':
+          value: Myself
+  is_current_becker_student:
+    '#type': checkbox
+    '#title': 'I am a current Becker student'
+    '#states':
+      visible:
+        ':input[name="requesting_for"]':
+          value: Myself
+  becker_account_email:
+    '#type': email
+    '#title': 'Email address on your Becker account'
+    '#title_display': invisible
+    '#placeholder': 'Email address on your Becker account'
+    '#states':
+      visible:
+        ':input[name="requesting_for"]':
+          value: Myself
+        ':input[name="is_current_becker_student"]':
+          checked: true
+  graduation_year:
+    '#type': select
+    '#title': 'What year do you plan to graduate?'
+    '#options':
+      '0000': 'Already graduated'
+      '2025': '2025'
+      '2026': '2026'
+      '2027': '2027'
+      '2028': '2028'
+      '2029': '2029'
+      '2030': '2030'
+      '2031': '2031'
+    '#empty_option': '- Graduation Year -'
+    '#states':
+      visible:
+        ':input[name="requesting_for"]':
+          value: Myself
+  message:
+    '#type': textarea
+    '#title': 'Message (optional)'
+    '#placeholder': 'Tell us more about what you are looking for...'
+    '#rows': 4
+  markup_consent:
+    '#type': webform_markup
+    '#markup': 'By submitting this form, I provide my signature, expressly consenting to calls, emails and/or texts regarding my educational options from Becker and its affiliates and contractors using an automated dialing system to the number and email address provided. I understand my consent is not required to enroll at Becker, and that I can withdraw my consent at any time. You can <a href="https://connect.becker.com/pref-center" target="_blank">unsubscribe at any time</a> by visiting our Consent Preference Center.'
+  marketing_consent:
+    '#type': checkbox
+    '#title': 'I consent to receive marketing communications from Becker Professional Education'
+  privacy_consent:
+    '#type': checkbox
+    '#title': 'I have read and agree to the <a href="/privacy-policy" target="_blank">Privacy Policy</a>'
+    '#required': true
+  business_brand:
+    '#type': hidden
+    '#title': 'Business Brand'
+    '#value': Becker
+  utm_source:
+    '#type': hidden
+    '#title': 'UTM Source'
+    '#prepopulate': true
+  utm_medium:
+    '#type': hidden
+    '#title': 'UTM Medium'
+    '#prepopulate': true
+  utm_campaign:
+    '#type': hidden
+    '#title': 'UTM Campaign'
+    '#prepopulate': true
+  utm_content:
+    '#type': hidden
+    '#title': 'UTM Content'
+    '#prepopulate': true
+  utm_term:
+    '#type': hidden
+    '#title': 'UTM Term'
+    '#prepopulate': true
+  lead_source_form:
+    '#type': webform_computed_token
+    '#title': 'Lead Source Form'
+    '#mode': text
+    '#template': |
+      {% if data.requesting_for == 'My organization' %}Contact Us - Buying for Org{% elseif data.lead_source_intent == 'Ready to Enroll' %}Contact Us - Ready to Enroll{% elseif data.lead_source_intent == 'Support' %}Customer Service - Contact Us{% else %}Contact Us - Exploring{% endif %}
+    '#ajax': false
+    '#display_on': none
+  lead_source_detail:
+    '#type': webform_computed_token
+    '#title': 'Lead Source Detail (UTM)'
+    '#mode': text
+    '#template': |
+      {% set parts = [] %}{% if data.utm_source %}{% set parts = parts|merge(['utm_source=' ~ data.utm_source]) %}{% endif %}{% if data.utm_medium %}{% set parts = parts|merge(['utm_medium=' ~ data.utm_medium]) %}{% endif %}{% if data.utm_campaign %}{% set parts = parts|merge(['utm_campaign=' ~ data.utm_campaign]) %}{% endif %}{% if data.utm_content %}{% set parts = parts|merge(['utm_content=' ~ data.utm_content]) %}{% endif %}{% if data.utm_term %}{% set parts = parts|merge(['utm_term=' ~ data.utm_term]) %}{% endif %}{{ parts|join(' | ') }}
+    '#ajax': false
+    '#display_on': none
+  comm_subscription:
+    '#type': webform_computed_token
+    '#title': 'Communication Subscriptions'
+    '#mode': text
+    '#template': |
+      {% if data.requesting_for == 'My organization' %}B2B - News and Events;B2B - Events;B2B - New Products{% elseif data.product_interest == 'Certified Management Accountant' %}CMA Content;CMA Promotions{% elseif data.product_interest == 'Continuing Professional Education' %}CPE Content;CPE Promotions{% elseif data.product_interest == 'Certified Internal Auditor' %}CIA Content;CIA Promotions{% elseif data.product_interest == 'Enrolled Agent' %}EA Content;EA Promotions{% elseif data.product_interest == 'Certified Financial Planner' %}CPA Content;CPA Promotions{% elseif data.product_interest == 'Staff Level Training' %}CPE Content;CPE Promotions{% elseif data.product_interest == 'CIA Challenge Exam' %}CIA Content;CIA Promotions{% else %}CPA Content;CPA Promotions{% endif %}
+    '#ajax': false
+    '#display_on': none
+  campaign_id:
+    '#type': webform_computed_token
+    '#title': 'Campaign ID'
+    '#mode': text
+    '#template': |
+      {% if data.requesting_for == 'My organization' %}701U700000eyrnzIAA{% elseif data.product_interest == 'Continuing Professional Education' %}701U700000eyrnuIAA{% elseif data.product_interest == 'Certified Management Accountant' %}701U700000eyrnvIAA{% elseif data.product_interest == 'Enrolled Agent' %}701U700000eyrnwIAA{% elseif data.product_interest == 'Certified Internal Auditor' %}701U700000eyrnxIAA{% elseif data.product_interest == 'Certified Financial Planner' %}701U700000eyrnyIAA{% elseif data.product_interest == 'Staff Level Training' %}701U700000eyro0IAA{% elseif data.product_interest == 'CIA Challenge Exam' %}701U700000eyro1IAA{% else %}701U700000eyrntIAA{% endif %}
+    '#ajax': false
+    '#display_on': none
+  consent_provided_value:
+    '#type': webform_computed_token
+    '#title': 'Consent Provided'
+    '#mode': text
+    '#template': |
+      {% if data.marketing_consent %}Email{% endif %}
+    '#ajax': false
+    '#display_on': none
+  privacy_consent_value:
+    '#type': webform_computed_token
+    '#title': 'Privacy Consent Status'
+    '#mode': text
+    '#template': |
+      {% if data.privacy_consent %}OptIn{% else %}NotSeen{% endif %}
+    '#ajax': false
+    '#display_on': none
+css: ''
+javascript: ''
+settings:
+  ajax: false
+  ajax_scroll_top: form
+  ajax_progress_type: ''
+  ajax_effect: ''
+  ajax_speed: null
+  page: true
+  page_submit_path: ''
+  page_confirm_path: ''
+  page_theme_name: ''
+  form_title: source_entity_webform
+  form_submit_once: true
+  form_open_message: ''
+  form_close_message: ''
+  form_exception_message: ''
+  form_previous_submissions: false
+  form_confidential: false
+  form_confidential_message: ''
+  form_disable_remote_addr: false
+  form_convert_anonymous: false
+  form_prepopulate: true
+  form_prepopulate_source_entity: false
+  form_prepopulate_source_entity_required: false
+  form_prepopulate_source_entity_type: ''
+  form_unsaved: false
+  form_disable_back: false
+  form_submit_back: false
+  form_disable_autocomplete: false
+  form_novalidate: false
+  form_disable_inline_errors: false
+  form_required: false
+  form_autofocus: false
+  form_details_toggle: false
+  form_reset: false
+  form_access_denied: default
+  form_access_denied_title: ''
+  form_access_denied_message: ''
+  form_access_denied_attributes: {  }
+  form_file_limit: ''
+  form_attributes: {  }
+  form_method: ''
+  form_action: ''
+  share: false
+  share_node: false
+  share_theme_name: ''
+  share_title: true
+  share_page_body_attributes: {  }
+  submission_label: ''
+  submission_exception_message: ''
+  submission_locked_message: ''
+  submission_log: false
+  submission_excluded_elements: {  }
+  submission_exclude_empty: false
+  submission_exclude_empty_checkbox: false
+  submission_views: {  }
+  submission_views_replace: {  }
+  submission_user_columns: {  }
+  submission_user_duplicate: false
+  submission_access_denied: default
+  submission_access_denied_title: ''
+  submission_access_denied_message: ''
+  submission_access_denied_attributes: {  }
+  previous_submission_message: ''
+  previous_submissions_message: ''
+  autofill: false
+  autofill_message: ''
+  autofill_excluded_elements: {  }
+  wizard_progress_bar: true
+  wizard_progress_pages: false
+  wizard_progress_percentage: false
+  wizard_progress_link: false
+  wizard_progress_states: false
+  wizard_start_label: ''
+  wizard_preview_link: false
+  wizard_confirmation: true
+  wizard_confirmation_label: ''
+  wizard_auto_forward: true
+  wizard_auto_forward_hide_next_button: false
+  wizard_keyboard: true
+  wizard_track: ''
+  wizard_prev_button_label: ''
+  wizard_next_button_label: ''
+  wizard_toggle: false
+  wizard_toggle_show_label: ''
+  wizard_toggle_hide_label: ''
+  wizard_page_type: container
+  wizard_page_title_tag: h2
+  preview: 0
+  preview_label: ''
+  preview_title: ''
+  preview_message: ''
+  preview_attributes: {  }
+  preview_excluded_elements: {  }
+  preview_exclude_empty: true
+  preview_exclude_empty_checkbox: false
+  draft: none
+  draft_multiple: false
+  draft_auto_save: false
+  draft_saved_message: ''
+  draft_loaded_message: ''
+  confirmation_type: inline
+  confirmation_url: ''
+  confirmation_title: "Thank you!"
+  confirmation_message: "<p>We've received your request and will be in touch within 1 business hour.</p>"
+  confirmation_attributes: {  }
+  confirmation_back: false
+  confirmation_back_label: ''
+  confirmation_back_attributes: {  }
+  confirmation_exclude_query: false
+  confirmation_exclude_token: false
+  confirmation_update: false
+  limit_total: null
+  limit_total_interval: null
+  limit_total_message: ''
+  limit_total_unique: false
+  limit_user: null
+  limit_user_interval: null
+  limit_user_message: ''
+  limit_user_unique: false
+  entity_limit_total: null
+  entity_limit_total_interval: null
+  entity_limit_user: null
+  entity_limit_user_interval: null
+  purge: all
+  purge_days: 14
+  results_disabled: false
+  results_disabled_ignore: false
+  results_customize: false
+  token_view: false
+  token_update: false
+  token_delete: false
+  serial_disabled: false
+access:
+  create:
+    roles:
+      - anonymous
+      - authenticated
+    users: []
+    permissions: []
+  view_any:
+    roles: []
+    users: []
+    permissions: []
+  update_any:
+    roles: []
+    users: []
+    permissions: []
+  delete_any:
+    roles: []
+    users: []
+    permissions: []
+  purge_any:
+    roles: []
+    users: []
+    permissions: []
+  view_own:
+    roles: []
+    users: []
+    permissions: []
+  update_own:
+    roles: []
+    users: []
+    permissions: []
+  delete_own:
+    roles: []
+    users: []
+    permissions: []
+  administer:
+    roles: []
+    users: []
+    permissions: []
+  test:
+    roles:
+      - administrator
+    users: []
+    permissions: []
+  configuration:
+    roles:
+      - administrator
+    users: []
+    permissions: []
+handlers: {}
+variants: {}

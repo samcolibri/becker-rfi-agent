@@ -73,235 +73,83 @@ function picklistMatch(actual, expected) {
 // ─── test scenarios ──────────────────────────────────────────────────────────
 
 const B2B_SUB = 'B2B - News and Events;B2B - Events;B2B - New Products';
+const B2B_COMM_SUB = 'B2B - News and Events;B2B - Events;B2B - New Products';
+
+const B2C_COMM_SUB = {
+  CPA: 'CPA Content;CPA Promotions',
+  CMA: 'CMA Content;CMA Promotions',
+  CPE: 'CPE Content;CPE Promotions',
+  CIA: 'CIA Content;CIA Promotions',
+  EA:  'EA Content;EA Promotions',
+  CFP: 'CPA Content;CPA Promotions',
+};
+
+function b2c(ts, slug, product, consentVal, subExpected) {
+  return {
+    label: `B2C | ${product} | CS - Inside Sales`,
+    ew: {
+      First_Name__c: 'E2E', Last_Name__c: `B2C-${product}`,
+      Email__c: `e2e.b2c.${slug}.${ts}@becker-test.com`,
+      Requesting_for__c: 'Myself', Primary_Interest__c: product,
+      Company__c: 'TestCo', RFI_Suggested_Queue__c: 'CS - Inside Sales',
+      BusinessBrand__c: 'Becker',
+      CommunicationSubscription__c: B2C_COMM_SUB[product],
+      Consent_Provided__c: consentVal, Consent_Captured_Source__c: 'Becker RFI Form',
+      Privacy_Consent_Status__c: 'OptIn',
+    },
+    expect: { recordType: 'B2C Lead', owner: 'CS - Inside Sales', subscription: subExpected },
+  };
+}
+
+function b2b(ts, slug, lastName, product, orgType, orgSize, queue) {
+  return {
+    label: `B2B | ${orgType} | ${orgSize} → ${queue}`,
+    ew: {
+      First_Name__c: 'E2E', Last_Name__c: lastName,
+      Email__c: `e2e.b2b.${slug}.${ts}@becker-test.com`,
+      Requesting_for__c: 'My organization', Primary_Interest__c: product,
+      Company__c: `E2E ${orgType} ${ts}`,
+      Organization_Type__c: orgType, Organization_Size__c: orgSize,
+      RFI_Suggested_Queue__c: queue,
+      BusinessBrand__c: 'Becker',
+      CommunicationSubscription__c: B2B_COMM_SUB,
+      Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
+      Privacy_Consent_Status__c: 'OptIn',
+    },
+    expect: { recordType: 'B2B Lead', owner: queue, subscription: B2B_SUB },
+  };
+}
 
 // Each scenario: { label, ew (fields to create), expect { recordType, owner, subscription } }
 function buildScenarios(ts) {
   return [
     // ── B2C paths ────────────────────────────────────────────────────────────
-    {
-      label: 'B2C | CPA | Inside Sales',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2C-CPA',
-        Email__c: `e2e.b2c.cpa.${ts}@becker-test.com`,
-        Requesting_for__c: 'Myself', Primary_Interest__c: 'CPA',
-        Company__c: 'TestCo', RFI_Suggested_Queue__c: 'Inside Sales',
-        Consent_Provided__c: 'Email;Phone', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2C Lead', owner: 'Inside Sales', subscription: 'CPA Content;CPA Promotions' },
-    },
-    {
-      label: 'B2C | CMA | Inside Sales',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2C-CMA',
-        Email__c: `e2e.b2c.cma.${ts}@becker-test.com`,
-        Requesting_for__c: 'Myself', Primary_Interest__c: 'CMA',
-        Company__c: 'TestCo', RFI_Suggested_Queue__c: 'Inside Sales',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2C Lead', owner: 'Inside Sales', subscription: 'CMA Content;CMA Promotions' },
-    },
-    {
-      label: 'B2C | CPE | Inside Sales',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2C-CPE',
-        Email__c: `e2e.b2c.cpe.${ts}@becker-test.com`,
-        Requesting_for__c: 'Myself', Primary_Interest__c: 'CPE',
-        Company__c: 'TestCo', RFI_Suggested_Queue__c: 'Inside Sales',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2C Lead', owner: 'Inside Sales', subscription: 'CPE Content;CPE Promotions' },
-    },
-    {
-      label: 'B2C | CIA | Inside Sales',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2C-CIA',
-        Email__c: `e2e.b2c.cia.${ts}@becker-test.com`,
-        Requesting_for__c: 'Myself', Primary_Interest__c: 'CIA',
-        Company__c: 'TestCo', RFI_Suggested_Queue__c: 'Inside Sales',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2C Lead', owner: 'Inside Sales', subscription: 'CIA Content;CIA Promotions' },
-    },
-    {
-      label: 'B2C | EA | Inside Sales',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2C-EA',
-        Email__c: `e2e.b2c.ea.${ts}@becker-test.com`,
-        Requesting_for__c: 'Myself', Primary_Interest__c: 'EA',
-        Company__c: 'TestCo', RFI_Suggested_Queue__c: 'Inside Sales',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2C Lead', owner: 'Inside Sales', subscription: 'EA Content;EA Promotions' },
-    },
-    {
-      label: 'B2C | CFP | Inside Sales',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2C-CFP',
-        Email__c: `e2e.b2c.cfp.${ts}@becker-test.com`,
-        Requesting_for__c: 'Myself', Primary_Interest__c: 'CFP',
-        Company__c: 'TestCo', RFI_Suggested_Queue__c: 'Inside Sales',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2C Lead', owner: 'Inside Sales', subscription: 'CPA Content;CPA Promotions' },
-    },
+    b2c(ts, 'cpa', 'CPA', 'Email;Phone', 'CPA Content;CPA Promotions'),
+    b2c(ts, 'cma', 'CMA', 'Email',       'CMA Content;CMA Promotions'),
+    b2c(ts, 'cpe', 'CPE', 'Email',       'CPE Content;CPE Promotions'),
+    b2c(ts, 'cia', 'CIA', 'Email',       'CIA Content;CIA Promotions'),
+    b2c(ts, 'ea',  'EA',  'Email',       'EA Content;EA Promotions'),
+    b2c(ts, 'cfp', 'CFP', 'Email',       'CPA Content;CPA Promotions'),
 
     // ── B2B — Global Firms ───────────────────────────────────────────────────
-    {
-      label: 'B2B | Accounting Firm | 251+ → Global Firms',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2B-GF-AcctFirm',
-        Email__c: `e2e.b2b.gf.acct.${ts}@becker-test.com`,
-        Requesting_for__c: 'My organization', Primary_Interest__c: 'CPA',
-        Company__c: `E2E Accounting Firm ${ts}`,
-        Organization_Type__c: 'Accounting Firm', Organization_Size__c: '251+',
-        RFI_Suggested_Queue__c: 'Global Firms',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2B Lead', owner: 'Global Firms', subscription: B2B_SUB },
-    },
-    {
-      label: 'B2B | Consulting Firm | <25 → Global Firms',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2B-GF-Consulting',
-        Email__c: `e2e.b2b.gf.consult.${ts}@becker-test.com`,
-        Requesting_for__c: 'My organization', Primary_Interest__c: 'CPE',
-        Company__c: `E2E Consulting ${ts}`,
-        Organization_Type__c: 'Consulting Firm', Organization_Size__c: '<25',
-        RFI_Suggested_Queue__c: 'Global Firms',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2B Lead', owner: 'Global Firms', subscription: B2B_SUB },
-    },
-    {
-      label: 'B2B | CPA Alliance | 26-100 → Global Firms',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2B-GF-CPA-Alliance',
-        Email__c: `e2e.b2b.gf.alliance.${ts}@becker-test.com`,
-        Requesting_for__c: 'My organization', Primary_Interest__c: 'CPA',
-        Company__c: `E2E CPA Alliance ${ts}`,
-        Organization_Type__c: 'CPA Alliance', Organization_Size__c: '26-100',
-        RFI_Suggested_Queue__c: 'Global Firms',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2B Lead', owner: 'Global Firms', subscription: B2B_SUB },
-    },
+    b2b(ts, 'gf.acct',    'B2B-GF-AcctFirm',   'CPA', 'Accounting Firm',                                      '251+',   'Global Firms'),
+    b2b(ts, 'gf.consult', 'B2B-GF-Consulting',  'CPE', 'Consulting Firm',                                      '<25',    'Global Firms'),
+    b2b(ts, 'gf.alliance','B2B-GF-CPA-Alliance','CPA', 'CPA Alliance',                                         '26-100', 'Global Firms'),
 
     // ── B2B — New Client Acquisition ─────────────────────────────────────────
-    {
-      label: 'B2B | Corporation | 101-250 → New Client Acquisition',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2B-NCA-Corp',
-        Email__c: `e2e.b2b.nca.corp.${ts}@becker-test.com`,
-        Requesting_for__c: 'My organization', Primary_Interest__c: 'CPE',
-        Company__c: `E2E Corp ${ts}`,
-        Organization_Type__c: 'Corporation/Healthcare/Bank/Financial Institution',
-        Organization_Size__c: '101-250',
-        RFI_Suggested_Queue__c: 'New Client Acquisition',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2B Lead', owner: 'New Client Acquisition', subscription: B2B_SUB },
-    },
-    {
-      label: 'B2B | Government Agency | 251+ → New Client Acquisition',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2B-NCA-Gov',
-        Email__c: `e2e.b2b.nca.gov.${ts}@becker-test.com`,
-        Requesting_for__c: 'My organization', Primary_Interest__c: 'CPE',
-        Company__c: `E2E Govt Agency ${ts}`,
-        Organization_Type__c: 'Government Agency/Not for Profit Organization',
-        Organization_Size__c: '251+',
-        RFI_Suggested_Queue__c: 'New Client Acquisition',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2B Lead', owner: 'New Client Acquisition', subscription: B2B_SUB },
-    },
+    b2b(ts, 'nca.corp', 'B2B-NCA-Corp', 'CPE', 'Corporation/Healthcare/Bank/Financial Institution', '101-250', 'New Client Acquisition'),
+    b2b(ts, 'nca.gov',  'B2B-NCA-Gov',  'CPE', 'Government Agency/Not for Profit Organization',     '251+',    'New Client Acquisition'),
 
     // ── B2B — University ─────────────────────────────────────────────────────
-    {
-      label: 'B2B | University | 26-100 → University',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2B-Uni',
-        Email__c: `e2e.b2b.uni.${ts}@becker-test.com`,
-        Requesting_for__c: 'My organization', Primary_Interest__c: 'CPA',
-        Company__c: `E2E University ${ts}`,
-        Organization_Type__c: 'University', Organization_Size__c: '26-100',
-        RFI_Suggested_Queue__c: 'University',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2B Lead', owner: 'University', subscription: B2B_SUB },
-    },
-    {
-      label: 'B2B | Society/Chapter | <25 → University',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2B-Uni-Society',
-        Email__c: `e2e.b2b.uni.soc.${ts}@becker-test.com`,
-        Requesting_for__c: 'My organization', Primary_Interest__c: 'CIA',
-        Company__c: `E2E Society ${ts}`,
-        Organization_Type__c: 'Society/Chapter', Organization_Size__c: '<25',
-        RFI_Suggested_Queue__c: 'University',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2B Lead', owner: 'University', subscription: B2B_SUB },
-    },
+    b2b(ts, 'uni',     'B2B-Uni',        'CPA', 'University',      '26-100', 'University'),
+    b2b(ts, 'uni.soc', 'B2B-Uni-Society','CIA', 'Society/Chapter', '<25',    'University'),
 
     // ── B2B — International ──────────────────────────────────────────────────
-    {
-      label: 'B2B | Non-US Organization | <25 → International',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2B-Intl',
-        Email__c: `e2e.b2b.intl.${ts}@becker-test.com`,
-        Requesting_for__c: 'My organization', Primary_Interest__c: 'CPA',
-        Company__c: `E2E Non-US Org ${ts}`,
-        Organization_Type__c: 'Non-US Organization', Organization_Size__c: '<25',
-        RFI_Suggested_Queue__c: 'International',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2B Lead', owner: 'International', subscription: B2B_SUB },
-    },
+    b2b(ts, 'intl', 'B2B-Intl', 'CPA', 'Non-US Organization', '<25', 'International'),
 
-    // ── B2B — Inside Sales (small/fallback) ──────────────────────────────────
-    {
-      label: 'B2B | Accounting Firm | <25 → Inside Sales',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2B-IS-SmallFirm',
-        Email__c: `e2e.b2b.is.small.${ts}@becker-test.com`,
-        Requesting_for__c: 'My organization', Primary_Interest__c: 'CPA',
-        Company__c: `E2E Small Firm ${ts}`,
-        Organization_Type__c: 'Accounting Firm', Organization_Size__c: '<25',
-        RFI_Suggested_Queue__c: 'Inside Sales',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2B Lead', owner: 'Inside Sales', subscription: B2B_SUB },
-    },
-    {
-      label: 'B2B | Other | 26-100 → Inside Sales',
-      ew: {
-        First_Name__c: 'E2E', Last_Name__c: 'B2B-IS-Other',
-        Email__c: `e2e.b2b.is.other.${ts}@becker-test.com`,
-        Requesting_for__c: 'My organization', Primary_Interest__c: 'CPE',
-        Company__c: `E2E Other Org ${ts}`,
-        Organization_Type__c: 'Other', Organization_Size__c: '26-100',
-        RFI_Suggested_Queue__c: 'Inside Sales',
-        Consent_Provided__c: 'Email', Consent_Captured_Source__c: 'Becker RFI Form',
-        Privacy_Consent_Status__c: 'OptIn',
-      },
-      expect: { recordType: 'B2B Lead', owner: 'Inside Sales', subscription: B2B_SUB },
-    },
+    // ── B2B — CS - Inside Sales (small/fallback) ─────────────────────────────
+    b2b(ts, 'is.small', 'B2B-IS-SmallFirm', 'CPA', 'Accounting Firm', '<25',    'CS - Inside Sales'),
+    b2b(ts, 'is.other', 'B2B-IS-Other',     'CPE', 'Other',           '26-100', 'CS - Inside Sales'),
   ];
 }
 
@@ -442,7 +290,7 @@ function buildMarkdown(results, runDate, instanceUrl, passed, failed, total) {
     ``,
     `**Date:** ${runDate}`,
     `**Sandbox:** ${instanceUrl}`,
-    `**Flow version:** Becker_RFI_Lead_Routing v11`,
+    `**Flow version:** Becker_RFI_Lead_Routing v18`,
     `**Result:** ${allPass ? '✅ ALL PASSED' : `❌ ${failed} FAILED`} — ${passed} checks passed, ${failed} failed across ${total} scenarios`,
     ``,
     `---`,
@@ -494,7 +342,7 @@ function buildMarkdown(results, runDate, instanceUrl, passed, failed, total) {
   lines.push('');
   lines.push('| Queue | Scenarios Tested |');
   lines.push('|---|---|');
-  lines.push('| Inside Sales | B2C (all products), B2B Accounting Firm <25, B2B Other 26-100 |');
+  lines.push('| CS - Inside Sales | B2C (all products), B2B Accounting Firm <25, B2B Other 26-100 |');
   lines.push('| Global Firms | B2B Accounting Firm 251+, Consulting Firm <25, CPA Alliance 26-100 |');
   lines.push('| New Client Acquisition | B2B Corporation 101-250, Government Agency 251+ |');
   lines.push('| University | B2B University 26-100, Society/Chapter <25 |');

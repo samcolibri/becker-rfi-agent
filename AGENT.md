@@ -1,5 +1,5 @@
 # Becker RFI Agent — UAT Runbook
-**Last verified:** 2026-04-22 (v16) | **Sandbox:** becker--bpedevf.sandbox.my.salesforce.com
+**Last verified:** 2026-04-22 (v18) | **Sandbox:** becker--bpedevf.sandbox.my.salesforce.com
 **21/21 E2E scenarios pass** — run `node scripts/test_routing_scenarios.js` to re-verify any time
 
 ---
@@ -230,16 +230,16 @@ All steps below are automated by this script. Manual verification steps also sho
 
 | Org Type | <25 | 26-100 | 101-250 | 251+ |
 |---|---|---|---|---|
-| Accounting Firm | Inside Sales | **Global Firms** | **Global Firms** | **Global Firms** |
-| Corporation/Healthcare/Bank | Inside Sales | **NCA** | **NCA** | **NCA** |
+| Accounting Firm | **CS - Inside Sales** | **Global Firms** | **Global Firms** | **Global Firms** |
+| Corporation/Healthcare/Bank | **CS - Inside Sales** | **NCA** | **NCA** | **NCA** |
 | Consulting Firm | **Global Firms** | **Global Firms** | **Global Firms** | **Global Firms** |
 | CPA Alliance | **Global Firms** | **Global Firms** | **Global Firms** | **Global Firms** |
-| Government / NFP | Inside Sales | **NCA** | **NCA** | **NCA** |
+| Government / NFP | **CS - Inside Sales** | **NCA** | **NCA** | **NCA** |
 | Society/Chapter | **University** | **University** | **University** | **University** |
 | Non-US Organization | **International** | **International** | **International** | **International** |
-| Student | Inside Sales | Inside Sales | Inside Sales | Inside Sales |
+| Student | **CS - Inside Sales** | **CS - Inside Sales** | **CS - Inside Sales** | **CS - Inside Sales** |
 | University | **University** | **University** | **University** | **University** |
-| Other | Inside Sales | Inside Sales | Inside Sales | Inside Sales |
+| Other | **CS - Inside Sales** | **CS - Inside Sales** | **CS - Inside Sales** | **CS - Inside Sales** |
 
 **Override rule:** If company matches an existing SF Account with an active owner (`Sales_Channel__c` set), lead goes to that owner regardless of matrix.
 
@@ -249,17 +249,17 @@ All steps below are automated by this script. Manual verification steps also sho
 
 | Flow | Version | Last Changed | Status |
 |---|---|---|---|
-| `Becker_RFI_Lead_Routing` | v16 | 2026-04-22 | ✅ Active |
+| `Becker_RFI_Lead_Routing` | v18 | 2026-04-22 | ✅ Active |
 | `External_Web_Form_Main_Record_Triggered_Flow_After_Save` | v22 | 2026-04-22 | ✅ Active |
 | `Create_Leads_Sub_Flow` | patched | 2026-04-21 | ✅ Active |
 
 **Flow execution order on ExternalWebform__c insert:**
-1. `Becker_RFI_Lead_Routing` (v15) — newest, runs first → checks existing lead, creates/updates Lead, assigns queue
+1. `Becker_RFI_Lead_Routing` (v18) — newest, runs first → checks existing lead, creates/updates Lead, assigns queue
 2. `External_Web_Form_Main_Record_Triggered_Flow_After_Save` (v22) — runs second → B2B detection, RecordType, CampaignMember
 
 ---
 
-## EW → Lead Field Mapping (complete, verified 2026-04-22)
+## EW → Lead Field Mapping (complete, verified 2026-04-22 v18)
 
 | Form Field | ExternalWebform__c | Lead | Verified |
 |---|---|---|---|
@@ -269,11 +269,11 @@ All steps below are automated by this script. Manual verification steps also sho
 | Phone | Phone__c | Phone | ✅ |
 | Company | Company__c | Company | ✅ |
 | Product Interest | Primary_Interest__c | Product_Line__c | ✅ |
-| Requesting For | Requesting_for__c | (branching only) | ✅ |
+| Requesting For | Requesting_for__c | (branching only — used for B2B/B2C RecordType, not written to Lead) | ✅ |
 | Org Type | Organization_Type__c | RFI_Organization_Type__c | ✅ |
 | Org Size | Organization_Size__c | RFI_Org_Size_Category__c | ✅ |
 | Role Type | Role_Type__c | RFI_Role_Type__c | ✅ |
-| HQ State (B2B) | HQ_State__c | HQ_State__c + RFI_HQ_State__c | ✅ |
+| HQ State (B2B) | HQ_State__c | RFI_HQ_State__c | ✅ v18 |
 | Resident State (B2C) | Resident_State__c | Resident_State__c | ✅ |
 | Current Becker Student | Is_Current_Becker_Student__c | Is_Current_Becker_Student__c | ✅ |
 | Graduation Year | What_year_do_you_plan_to_graduate__c | What_year_do_you_plan_to_graduate__c | ✅ |
@@ -281,12 +281,14 @@ All steps below are automated by this script. Manual verification steps also sho
 | Lead Source Form | Lead_Source_Form__c | Lead_Source_Form__c | ✅ |
 | Lead Source Date | Lead_Source_Form_Date__c | Lead_Source_Form_Date__c | ✅ |
 | UTM Params | Lead_Source_Detail__c | Lead_Source_Detail__c | ✅ |
+| Comm Subscriptions | CommunicationSubscription__c | Subscription_id__c (via CDM) | ✅ |
 | Queue Assignment | RFI_Suggested_Queue__c | OwnerId (via queue lookup) | ✅ |
 | Campaign | Campaign__c | CampaignMember (created) | ✅ |
 | Consent | Consent_Provided__c | Consent_Provided__c | ✅ |
 | Privacy Consent | Privacy_Consent_Status__c | Privacy_Consent_Status__c | ✅ |
 | Brand | BusinessBrand__c | Business_Brand__c | ✅ |
 | Message | If_other__c | Description | ✅ |
+| Record Type | (derived from Requesting_for__c) | RecordTypeId | ✅ |
 
 ---
 

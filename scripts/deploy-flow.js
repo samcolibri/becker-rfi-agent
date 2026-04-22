@@ -41,7 +41,7 @@ async function main() {
   const metaUrl = `${session.instanceUrl}/services/Soap/m/${VERSION}`;
 
   const deployXml = wrapSoap(session.token,
-    `<met:deploy><met:ZipFile>${zipB64}</met:ZipFile><met:DeployOptions><met:checkOnly>false</met:checkOnly><met:ignoreWarnings>true</met:ignoreWarnings><met:rollbackOnError>true</met:rollbackOnError><met:testLevel>NoTestRun</met:testLevel></met:DeployOptions></met:deploy>`
+    `<met:deploy><met:ZipFile>${zipB64}</met:ZipFile><met:DeployOptions><met:checkOnly>false</met:checkOnly><met:ignoreWarnings>true</met:ignoreWarnings><met:rollbackOnError>true</met:rollbackOnError><met:singlePackage>true</met:singlePackage><met:testLevel>NoTestRun</met:testLevel></met:DeployOptions></met:deploy>`
   );
 
   const r = await fetch(metaUrl, {

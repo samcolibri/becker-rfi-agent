@@ -1,5 +1,5 @@
 # Becker RFI Agent — Build Status
-## Last updated: 2026-04-22 (v16 deploy)
+## Last updated: 2026-04-22 (v18 deploy)
 ## Sandbox: becker--bpedevf.sandbox.my.salesforce.com
 ## Author: Sam Chaudhary (AI Architect) + Claude Sonnet 4.6
 
@@ -15,9 +15,13 @@ All routing paths, field mappings (including Org Type, Org Size, Role Type, Subs
 
 | Flow | Version | Last Deployed | Status |
 |---|---|---|---|
-| `Becker_RFI_Lead_Routing` | **v16** | 2026-04-22 | ✅ Active |
+| `Becker_RFI_Lead_Routing` | **v18** | 2026-04-22 | ✅ Active |
 | `External_Web_Form_Main_Record_Triggered_Flow_After_Save` | **v22** | 2026-04-22 | ✅ Active |
 | `Create_Leads_Sub_Flow` | patched | 2026-04-21 | ✅ Active |
+
+**v18 changes (2026-04-22):** Removed duplicate `Lead.HQ_State__c` mapping — HQ state from form now only writes to `Lead.RFI_HQ_State__c` (was writing to both `HQ_State__c` and `RFI_HQ_State__c`). Affects Update_Existing_Lead and Create_B2B_Lead paths. Also added Requesting_for__c documentation (branching only, not written to Lead) and RecordTypeId mapping entry to field map.
+
+**v17 changes (2026-04-22):** Retired "Inside Sales" queue — all references changed to "CS - Inside Sales". Affects: Lookup_Inside_Sales_Fallback node (flow), QUEUES.INSIDE_SALES constant (routing-engine.js), routing matrix JSON, low-confidence fallback in lead-processor.js. SF admin action required: reassign existing Inside Sales leads to CS - Inside Sales, then delete the Inside Sales queue.
 
 **v16 changes (2026-04-22):** Added RFI_Organization_Type__c, RFI_Org_Size_Category__c, RFI_Role_Type__c, RFI_HQ_State__c to Update_Existing_Lead path. These fields were only in Create_B2B/B2C_Lead paths but those never run (v21/v32 creates the Lead first, so our flow always hits Update_Existing_Lead). Also fixed Subscription_id__c (blank on B2B leads): root cause was EW.CommunicationSubscription__c not being set — v21 reads that field to create CDM records, which CDM - Lead Trigger Flow then uses to set Lead.Subscription_id__c. Now Node.js sets CommunicationSubscription__c on EW for all paths. Also fixed support path city/state/country fields (form sends them but server.js wasn't reading them).
 
