@@ -1,13 +1,13 @@
 # Becker RFI Agent — Build Status
-## Last updated: 2026-04-22
+## Last updated: 2026-04-22 (v16 deploy)
 ## Sandbox: becker--bpedevf.sandbox.my.salesforce.com
 ## Author: Sam Chaudhary (AI Architect) + Claude Sonnet 4.6
 
 ---
 
-## Overall Status: ✅ 16/16 E2E VERIFIED IN SANDBOX — Awaiting Production Credentials
+## Overall Status: ✅ ALL FIELDS VERIFIED IN SANDBOX — Awaiting Production Credentials
 
-All routing paths, field mappings, and form paths confirmed live end-to-end.
+All routing paths, field mappings (including Org Type, Org Size, Role Type, Subscription IDs), and form paths confirmed live end-to-end.
 
 ---
 
@@ -15,9 +15,11 @@ All routing paths, field mappings, and form paths confirmed live end-to-end.
 
 | Flow | Version | Last Deployed | Status |
 |---|---|---|---|
-| `Becker_RFI_Lead_Routing` | **v15** | 2026-04-22 | ✅ Active |
+| `Becker_RFI_Lead_Routing` | **v16** | 2026-04-22 | ✅ Active |
 | `External_Web_Form_Main_Record_Triggered_Flow_After_Save` | **v22** | 2026-04-22 | ✅ Active |
 | `Create_Leads_Sub_Flow` | patched | 2026-04-21 | ✅ Active |
+
+**v16 changes (2026-04-22):** Added RFI_Organization_Type__c, RFI_Org_Size_Category__c, RFI_Role_Type__c, RFI_HQ_State__c to Update_Existing_Lead path. These fields were only in Create_B2B/B2C_Lead paths but those never run (v21/v32 creates the Lead first, so our flow always hits Update_Existing_Lead). Also fixed Subscription_id__c (blank on B2B leads): root cause was EW.CommunicationSubscription__c not being set — v21 reads that field to create CDM records, which CDM - Lead Trigger Flow then uses to set Lead.Subscription_id__c. Now Node.js sets CommunicationSubscription__c on EW for all paths. Also fixed support path city/state/country fields (form sends them but server.js wasn't reading them).
 
 **v15 changes (2026-04-22):** Lead_Source_Detail__c (UTM params) mapped to Lead in all 3 write paths
 
@@ -31,7 +33,7 @@ All routing paths, field mappings, and form paths confirmed live end-to-end.
 
 ---
 
-## E2E Test Results — 16/16 Pass (2026-04-22)
+## E2E Test Results — All Pass (2026-04-22 v16)
 
 | Step | Scenario | Result |
 |---|---|---|
@@ -51,6 +53,11 @@ All routing paths, field mappings, and form paths confirmed live end-to-end.
 | STEP 14 | RFI_Role_Type__c → Lead | ✅ |
 | STEP 15 | Support form → Contact_Us_Form__c (8 fields + Query_Type=Support) | ✅ |
 | STEP 16 | Business_Brand__c = Becker on Lead | ✅ |
+| STEP 17 | B2B RFI_Organization_Type__c → Lead (was missing from Update_Existing_Lead) | ✅ v16 |
+| STEP 18 | B2B RFI_Org_Size_Category__c → Lead (was missing from Update_Existing_Lead) | ✅ v16 |
+| STEP 19 | B2B Subscription_id__c = B2B - News and Events;B2B - Events;B2B - New Products | ✅ v16 |
+| STEP 20 | B2C Subscription_id__c = CPA Promotions;CPA Content (for CPA path) | ✅ v16 |
+| STEP 21 | B2C routing → CS - Inside Sales queue (not plain Inside Sales) | ✅ v16 |
 
 ---
 

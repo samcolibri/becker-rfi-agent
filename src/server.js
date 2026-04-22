@@ -42,7 +42,7 @@ app.post('/api/submit', async (req, res) => {
     firstName, lastName, email, phone,
     intentPath,                          // exploring | ready | b2b | support
     productInterest, supportTopic,
-    orgName, orgType, orgSize, state,
+    orgName, orgType, orgSize, state, city, country,
     roleType, graduationYear, beckerStudentEmail,
     message, preferredLearning,
     consentGiven, privacyConsent,
@@ -71,6 +71,8 @@ app.post('/api/submit', async (req, res) => {
     orgType: orgType || null,
     orgSize: orgSize || null,
     state: state || null,
+    city: city || null,
+    country: country || null,
     roleType: roleType || null,
     graduationYear: graduationYear || null,
     beckerStudentEmail: beckerStudentEmail || null,

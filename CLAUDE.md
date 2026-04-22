@@ -3,10 +3,10 @@
 # DO NOT EDIT field values or routing rules without re-validating against source Excel
 
 ## ═══════════════════════════════════════════════════════
-## CURRENT BUILD STATE — RESUME FROM HERE (2026-04-21)
+## CURRENT BUILD STATE — RESUME FROM HERE (2026-04-22 v16)
 ## ═══════════════════════════════════════════════════════
 
-### Status: SF FLOW E2E VERIFIED ✅ — 16/16 pass (2026-04-22 session 4)
+### Status: SF FLOW E2E VERIFIED ✅ — All fields pass including Org Type, Org Size, Role Type, Subscription IDs (2026-04-22 session 4)
 
 ### What is built + verified
 - React form (Becker official Figma design): `client/src/app/App.tsx`
@@ -21,10 +21,11 @@
   - **B2C leads now route to "CS - Inside Sales" queue** (not plain "Inside Sales")
   - Graduation year now writes to `What_year_do_you_plan_to_graduate__c` EW field
 - Email validator: `src/email-validator.js` — Hunter.io + spam pattern filter
-- **SF Flow v15** (`Becker_RFI_Lead_Routing`): Active on ExternalWebform__c, Create, After Save
+- **SF Flow v16** (`Becker_RFI_Lead_Routing`): Active on ExternalWebform__c, Create, After Save
   - v13: Lead_Source_Form__c, Lead_Source_Form_Date__c, Product_Line__c mappings
   - v14 (2026-04-22): HQ_State__c, Resident_State__c, Is_Current_Becker_Student__c; RFI_HQ_State__c source fixed
   - v15 (2026-04-22): Lead_Source_Detail__c (UTM) mapped to all 3 Lead write paths
+  - v16 (2026-04-22): RFI_Organization_Type__c, RFI_Org_Size_Category__c, RFI_Role_Type__c, RFI_HQ_State__c added to Update_Existing_Lead (were only in Create paths which never run — v21/v32 always creates Lead first). Node.js now sets EW.CommunicationSubscription__c so CDM - Lead Trigger Flow correctly populates Lead.Subscription_id__c for B2B and B2C. Support path city/country now passed from form to EW + Contact_Us_Form__c.
 - **SF Flow v21** (`External_Web_Form_Main_Record_Triggered_Flow_After_Save`) — fixed twice:
   - Lead_Source_Form__c source bug fixed (2026-04-21)
   - B2B detection fixed (2026-04-22): Check_If_B2B now checks `Requesting_for__c = 'My organization'`
@@ -48,6 +49,12 @@
 | B2B RecordTypeId | Requesting_for__c=My organization | Lead.RecordTypeId=B2B (012i0000001E3hmAAC) | ✅ v21 fix |
 | B2B Lead_Source_Detail__c | UTM params set on EW | Lead.Lead_Source_Detail__c populated | ✅ v15 |
 | B2C Lead_Source_Detail__c | UTM params set on EW | Lead.Lead_Source_Detail__c populated | ✅ v15 |
+| B2B RFI_Organization_Type__c | EW.Organization_Type__c=Consulting Firm | Lead.RFI_Organization_Type__c=Consulting Firm | ✅ v16 |
+| B2B RFI_Org_Size_Category__c | EW.Organization_Size__c=101-250 | Lead.RFI_Org_Size_Category__c=101-250 | ✅ v16 |
+| B2B RFI_Role_Type__c | EW.Role_Type__c=Supervisor/Director/Manager | Lead.RFI_Role_Type__c=Supervisor/Director/Manager | ✅ v16 |
+| B2B Subscription_id__c | EW.CommunicationSubscription__c=B2B subs | Lead.Subscription_id__c=B2B - News and Events;... | ✅ v16 |
+| B2C Subscription_id__c | EW.CommunicationSubscription__c=CPA Content;CPA Promotions | Lead.Subscription_id__c=CPA Promotions;CPA Content | ✅ v16 |
+| B2C CS - Inside Sales routing | RFI_Suggested_Queue__c=CS - Inside Sales | Lead.OwnerId=CS - Inside Sales queue | ✅ v16 |
 | Support form → Contact_Us_Form__c | Support submission | Contact_Us_Form__c created with all 8 fields | ✅ |
 
 ### Campaign note (confirmed 2026-04-21)

@@ -33,6 +33,20 @@ const PRODUCT_INTEREST_MAP = {
   'Staff Level Training':              'CPA',
 };
 
+// Maps to EW.CommunicationSubscription__c — v21 reads this to create CDM subscription records
+// CDM - Lead Trigger Flow then reads CDM records and sets Lead.Subscription_id__c
+const SUBSCRIPTION_MAP = {
+  b2b: 'B2B - News and Events;B2B - Events;B2B - New Products',
+  'Certified Public Accountant':       'CPA Content;CPA Promotions',
+  'Certified Management Accountant':   'CMA Content;CMA Promotions',
+  'Continuing Professional Education': 'CPE Content;CPE Promotions',
+  'Certified Internal Auditor':        'CIA Content;CIA Promotions',
+  'CIA Challenge Exam':                'CIA Content;CIA Promotions',
+  'Enrolled Agent':                    'EA Content;EA Promotions',
+  'Certified Financial Planner':       'CPA Content;CPA Promotions',
+  'Staff Level Training':              'CPE Content;CPE Promotions',
+};
+
 function toSfProductInterest(productInterest) {
   return PRODUCT_INTEREST_MAP[productInterest] || productInterest || null;
 }
@@ -56,7 +70,7 @@ function mapIntentToStatus(intentPath) {
 function buildWebformRecord(submission, suggestedQueue) {
   const {
     firstName, lastName, email, phone,
-    orgName, orgType, orgSize, state,
+    orgName, orgType, orgSize, state, city, country,
     roleType, productInterest, graduationYear,
     beckerStudentEmail, isCurrentBeckerStudent, message, intentPath,
     utmParams, consentGiven, privacyConsent,
@@ -78,6 +92,8 @@ function buildWebformRecord(submission, suggestedQueue) {
     Role_Type__c: roleType || null,
     Organization_Size__c: orgSize || null,
     Address__StateCode__s: state || null,
+    Address__City__s: city || null,
+    Address__CountryCode__s: country || null,
     HQ_State__c: intentPath === 'b2b' ? (state || null) : null,
     Resident_State__c: intentPath !== 'b2b' ? (state || null) : null,
     Is_Current_Becker_Student__c: isCurrentBeckerStudent || false,
@@ -97,6 +113,11 @@ function buildWebformRecord(submission, suggestedQueue) {
     Consent_Provided__c: consentGiven ? 'Email;Phone;SMS' : null,
     Consent_Captured_Source__c: 'Becker Contact Us Form',
     Privacy_Consent_Status__c: privacyConsent ? 'OptIn' : 'NotSeen',
+    // CDM subscription IDs — v21 reads this to create CommSubscriptionConsent records
+    // CDM - Lead Trigger Flow then reads those records and sets Lead.Subscription_id__c
+    CommunicationSubscription__c: intentPath === 'b2b'
+      ? SUBSCRIPTION_MAP.b2b
+      : (intentPath !== 'support' ? (SUBSCRIPTION_MAP[productInterest] || null) : null),
     // Free-text message for support path
     If_other__c: message || null,
     // Campaign membership — drives SFMC email sends via MC Connect
