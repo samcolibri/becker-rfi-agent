@@ -1,13 +1,21 @@
 # Becker RFI Agent — Build Status
-## Last updated: 2026-04-22 (v18 deploy)
+## Last updated: 2026-04-22 (v20 deploy — Drupal-native architecture)
 ## Sandbox: becker--bpedevf.sandbox.my.salesforce.com
 ## Author: Sam Chaudhary (AI Architect) + Claude Sonnet 4.6
 
 ---
 
-## Overall Status: ✅ ALL FIELDS VERIFIED IN SANDBOX — Awaiting Production Credentials
+## Overall Status: ✅ SF FLOW v20 DEPLOYED — Drupal webform config ready for Brian
 
-All routing paths, field mappings (including Org Type, Org Size, Role Type, Subscription IDs), and form paths confirmed live end-to-end.
+Architecture: **Native Drupal Webform → Salesforce Suite → ExternalWebform__c → SF Flows**
+No Node.js middleware. No Railway. Pure Drupal → Salesforce.
+
+### What Brian needs to do next
+1. Import `drupal/config/webform.webform.becker_rfi.yml` via Admin → Structure → Webforms → Import
+2. Configure SF Mapping (Admin → Salesforce → Mappings → Add) using `drupal/config/salesforce_field_map.yml`
+3. Place form on `/contact-us` via `atge_form` paragraph component
+4. Test B2B + B2C submissions end-to-end
+See `drupal/BRIAN_DEPLOY.md` for full step-by-step.
 
 ---
 
@@ -15,7 +23,7 @@ All routing paths, field mappings (including Org Type, Org Size, Role Type, Subs
 
 | Flow | Version | Last Deployed | Status |
 |---|---|---|---|
-| `Becker_RFI_Lead_Routing` | **v18** | 2026-04-22 | ✅ Active |
+| `Becker_RFI_Lead_Routing` | **v20** | 2026-04-22 | ✅ Active |
 | `External_Web_Form_Main_Record_Triggered_Flow_After_Save` | **v22** | 2026-04-22 | ✅ Active |
 | `Create_Leads_Sub_Flow` | patched | 2026-04-21 | ✅ Active |
 
