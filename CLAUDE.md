@@ -6,7 +6,7 @@
 ## CURRENT BUILD STATE — RESUME FROM HERE (2026-04-21)
 ## ═══════════════════════════════════════════════════════
 
-### Status: SF FLOW E2E VERIFIED ✅ — 10/10 routing + campaign scenarios pass (2026-04-21 session 2)
+### Status: SF FLOW E2E VERIFIED ✅ — All field mappings + routing scenarios confirmed (2026-04-21 session 3)
 
 ### What is built + verified
 - React form (Becker official Figma design): `client/src/app/App.tsx`
@@ -21,8 +21,10 @@
   - **B2C leads now route to "CS - Inside Sales" queue** (not plain "Inside Sales")
   - Graduation year now writes to `What_year_do_you_plan_to_graduate__c` EW field
 - Email validator: `src/email-validator.js` — Hunter.io + spam pattern filter
-- **SF Flow v13** (`Becker_RFI_Lead_Routing`): Active on ExternalWebform__c, Create, After Save
+- **SF Flow v14** (`Becker_RFI_Lead_Routing`): Active on ExternalWebform__c, Create, After Save
   - v13: adds Lead_Source_Form__c, Lead_Source_Form_Date__c, Product_Line__c mappings
+  - v14 (2026-04-21): adds HQ_State__c, Resident_State__c, Is_Current_Becker_Student__c mappings;
+    fixes RFI_HQ_State__c source (was Address__StateCode__s → now EW.HQ_State__c)
 - **SF Flow v21 + v32 (Becker's existing flows) — field mapping bug fixed (2026-04-21)**:
   - `External_Web_Form_Main_Record_Triggered_Flow_After_Save` (v21)
   - `Create_Leads_Sub_Flow` (v32)
@@ -31,7 +33,7 @@
   - Fixed `Lead_Source_Form_Date__c ← Todays_Date` → `← EW.Lead_Source_Form_Date__c` ✅
 - Approval docs: EXECUTIVE_SUMMARY.md, ARCHITECTURE.md, SETUP.md, README.md
 
-### Verified routing scenarios (2026-04-21 session 2) — 10/10 pass
+### Verified scenarios — all pass
 | Scenario | Input | Expected | Status |
 |---|---|---|---|
 | B2B Active Account Owner | Standish Management (JoAnn Veiga — active, Sales_Channel=Firm) | Lead.Owner = JoAnn Veiga (user) | ✅ |
@@ -39,6 +41,9 @@
 | B2C Exploring | Requesting_for=Myself, RFI_Suggested_Queue=CS - Inside Sales | Lead.Owner = CS - Inside Sales queue | ✅ |
 | Campaign membership B2C | CPA product, Campaign__c set | CampaignMember created | ✅ |
 | Campaign membership B2B | B2B Lead Form campaign | CampaignMember created | ✅ |
+| B2B HQ_State__c | EW.HQ_State__c=TX | Lead.HQ_State__c=TX, Lead.RFI_HQ_State__c=TX | ✅ v14 |
+| B2C Resident_State__c | EW.Resident_State__c=CA | Lead.Resident_State__c=CA | ✅ v14 |
+| B2C Is_Current_Becker_Student__c | EW.Is_Current_Becker_Student__c=true | Lead.Is_Current_Becker_Student__c=true | ✅ v14 |
 
 ### Campaign note (confirmed 2026-04-21)
 CampaignMember records ARE created even when campaigns are `IsActive = false`.
@@ -46,16 +51,22 @@ Huma does NOT need to activate campaigns for membership to work.
 Activating campaigns is still recommended for SFMC MC Connect and campaign reports.
 
 ### Blocking for go-live
-1. Angel Cichy (SF admin): create 9 custom Lead fields → SETUP.md §1
-2. Angel Cichy: confirm 7 SF queue API names → SETUP.md §2
-3. Huma Yousuf: confirm existing SF lead assignment rules are inactive → SETUP.md §3
-4. Sam: obtain SF Connected App credentials (SF_CLIENT_ID, SF_CLIENT_SECRET, SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN)
-5. Sam: obtain SFMC credentials + 11 journey event keys → SETUP.md §6+7
-6. **EW fields still missing** (Angel/Huma must create before those mappings work):
-   - `HQ_State__c` on ExternalWebform__c → `RFI_HQ_State__c` on Lead
-   - `Resident_State__c` on ExternalWebform__c → `RFI_Resident_State__c` on Lead
-   - `Is_Current_Becker_Student__c` on ExternalWebform__c → `Is_Current_Becker_Student__c` on Lead
-   - `Requesting_for__c` on Lead (does not exist — needed for B2B/B2C record type toggle on Lead)
+1. Sam: obtain SF Connected App credentials for prod (SF_CLIENT_ID, SF_CLIENT_SECRET, SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN)
+2. Sam: obtain SFMC credentials + 11 journey event keys → SETUP.md §6+7
+3. Angel Cichy: confirm 7 SF queue API names match prod → SETUP.md §2
+4. Huma Yousuf: confirm existing SF lead assignment rules are inactive in prod → SETUP.md §3
+
+### EW → Lead field mapping status (verified 2026-04-21 session 3)
+All fields below exist in sandbox and are mapped in v14 flow. Smoke tested ✅.
+| EW Field | Type | Lead Field | Type | Status |
+|---|---|---|---|---|
+| HQ_State__c | text(100) | HQ_State__c | text(2) | ✅ v14 — B2B path |
+| HQ_State__c | text(100) | RFI_HQ_State__c | text(2) | ✅ v14 — fixed (was Address__StateCode__s) |
+| Resident_State__c | text(100) | Resident_State__c | text(2) | ✅ v14 — B2C path |
+| Is_Current_Becker_Student__c | boolean | Is_Current_Becker_Student__c | boolean | ✅ v14 |
+| Requesting_for__c | picklist | (no Lead field) | — | N/A — field only on EW, not Lead |
+
+Note: `Requesting_for__c` exists on EW (picklist: Myself/My organization). It does NOT exist on Lead in sandbox. The flow uses it internally for B2B/B2C branching — it does not need to be mapped to Lead.
 7. Huma: optionally activate 9 campaigns in sandbox for SFMC MC Connect and reporting:
    - Becker.com email signup - CPA (701U700000eyrntIAA)
    - Becker.com email signup - CPE (701U700000eyrnuIAA)
@@ -98,11 +109,10 @@ node scripts/sync-campaign-ids.js
 ## SF FLOW — ARCHITECTURE & EXACT DEPLOY STEPS
 ## ═══════════════════════════════════════════════════════
 
-### Flow: Becker_RFI_Lead_Routing (v11)
+### Flow: Becker_RFI_Lead_Routing (v14)
 - **Object**: ExternalWebform__c
 - **Trigger**: Create, After Save (no entry conditions — fires on every new EW record)
-- **Sandbox ID**: 301U700000ez6BIIAY (active version)
-- **Source**: `/tmp/becker_rfi_v12.xml` (last deployed 2026-04-21)
+- **Source**: `/tmp/becker_rfi_v14.xml` (last deployed 2026-04-21)
 
 ### How the flow works (v12 logic)
 

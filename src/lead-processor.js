@@ -58,7 +58,7 @@ function buildWebformRecord(submission, suggestedQueue) {
     firstName, lastName, email, phone,
     orgName, orgType, orgSize, state,
     roleType, productInterest, graduationYear,
-    beckerStudentEmail, message, intentPath,
+    beckerStudentEmail, isCurrentBeckerStudent, message, intentPath,
     utmParams, consentGiven, privacyConsent,
   } = submission;
 
@@ -78,6 +78,9 @@ function buildWebformRecord(submission, suggestedQueue) {
     Role_Type__c: roleType || null,
     Organization_Size__c: orgSize || null,
     Address__StateCode__s: state || null,
+    HQ_State__c: intentPath === 'b2b' ? (state || null) : null,
+    Resident_State__c: intentPath !== 'b2b' ? (state || null) : null,
+    Is_Current_Becker_Student__c: isCurrentBeckerStudent || false,
     email_address_you_use_to_login_to_Becker__c: beckerStudentEmail || null,
     What_year_do_you_plan_to_graduate__c: graduationYear || null,
     BusinessBrand__c: 'Becker',
