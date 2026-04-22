@@ -14,9 +14,11 @@
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "jsforce": "^3.10.14"
   },
   "devDependencies": {
+    "adm-zip": "^0.5.17",
     "jest": "^29.7.0",
     "nodemon": "^3.1.0"
   },
