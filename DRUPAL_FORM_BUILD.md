@@ -25,7 +25,7 @@ The React form is already built, tested, and deployed. It connects to Salesforce
 
 ### Step 1 — Get the live URL from Sam
 
-The form is deployed on Railway. Sam will provide the URL (e.g. `https://becker-rfi.railway.app`).
+The form is deployed on Railway. Sam will provide the URL (e.g. `https://YOUR-HOST-URL`).
 The form lives at the root path `/`.
 
 ### Step 2 — Add to Drupal as a block
@@ -38,7 +38,7 @@ The form lives at the root path `/`.
 <!-- Becker RFI Form Embed -->
 <div id="becker-rfi-container" style="max-width:640px; margin:0 auto;">
   <iframe
-    src="https://becker-rfi.railway.app"
+    src="https://YOUR-HOST-URL"
     title="Becker Contact Us"
     width="100%"
     height="750"
@@ -415,7 +415,7 @@ In Webform field settings → Conditions tab:
 The React form has live typeahead from SF Accounts. To replicate in Drupal:
 
 ```
-GET https://becker-rfi.railway.app/api/accounts?q=<search_term>
+GET https://YOUR-HOST-URL/api/accounts?q=<search_term>
 ```
 
 Returns: `[{ "id": "001...", "name": "Smith & Associates" }]`

@@ -254,12 +254,6 @@ npm start               # server on :3000
 open http://localhost:3000
 ```
 
-### To deploy (Railway)
-```bash
-railway login && railway up
-# set all env vars from .env.example via: railway variables set KEY=VALUE
-```
-
 ### Test the routing engine (no credentials needed)
 ```bash
 npm test    # 27 tests should pass

@@ -12,7 +12,6 @@ app.use(cors({
     /becker\.com$/,
     /dev\.becker\.com$/,
     /localhost(:\d+)?$/,
-    /railway\.app$/,
   ],
   methods: ['GET', 'POST'],
 }));

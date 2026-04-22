@@ -224,22 +224,15 @@ SFMC_EVENT_CSAT=
 
 ## Deployment
 
-The server is a standard Node.js Express app. It can run on any Node.js hosting:
+The server is a standard Node.js Express app. It can run on any Node.js-capable host (EC2, Azure App Service, Heroku, or any VPS):
 
-**Railway (recommended — zero config):**
 ```bash
-railway login
-railway new
-railway up
-railway variables set KEY=VALUE  # set all env vars
+npm install
+npm run build:client
+npm start               # serves on PORT env var (default 3000)
 ```
 
-**Heroku:**
-```bash
-heroku create becker-rfi-agent
-heroku config:set KEY=VALUE  # set all env vars
-git push heroku main
-```
+Set all environment variables from `.env.example` on the host before starting.
 
 **AWS / Azure / GCP:** any container or Node.js runtime works. The app listens on `process.env.PORT || 3000`.
 
