@@ -347,7 +347,7 @@ async function runSupportFormTest() {
   const email = `e2e.support.${ts}@becker-test.com`;
   const cleanup = [];
 
-  // Create EW with support path fields
+  // Create EW with support path fields (v21 flow — includes City/State/Country/Form_Applied)
   const ew = await sfPost('ExternalWebform__c', {
     First_Name__c:              'E2E',
     Last_Name__c:               `Support-${ts}`,
@@ -363,15 +363,19 @@ async function runSupportFormTest() {
     Lead_Source_Form_Date__c:   new Date().toISOString(),
     If_other__c:                'I need help with my CPA exam access',
     RFI_Suggested_Queue__c:     'CS - Contact Center Inbound',
+    Address__City__s:           'Chicago',
+    Address__StateCode__s:      'IL',
+    Address__CountryCode__s:    'US',
   });
   cleanup.push({ obj: 'ExternalWebform__c', id: ew.id });
 
   console.log(`  EW created: ${ew.id}. Waiting ${WAIT_MS / 1000}s for flows...`);
   await sleep(WAIT_MS);
 
-  // Check 1: Contact_Us_Form__c created
+  // Check 1: Contact_Us_Form__c created (v21 flow — all fields incl. City/State/Country/Form_Applied)
   const cufs = await query(
     `SELECT Id, First_Name__c, Last_Name__c, Email__c, Phone__c,
+            City__c, State__c, Country__c, Form_Applied__c,
             I_would_like_to_hear_more_about__c, Query_Type__c,
             Please_tell_us_about_your_question__c,
             Lead_Source_Form__c, Business_Brand__c,
@@ -384,10 +388,7 @@ async function runSupportFormTest() {
 
   console.log(`\n── Contact_Us_Form__c fields ───────────────`);
   if (!cuf) {
-    check('Contact_Us_Form__c created', 'NOT FOUND', 'record created',
-      { note: 'Support path may require Node.js middleware; EW alone may not trigger CUF creation' });
-    console.log('\n  NOTE: In Drupal-native architecture, Contact_Us_Form__c creation');
-    console.log('  requires SF Flow to handle support path. Check flow v20 support branch.');
+    check('Contact_Us_Form__c created', 'NOT FOUND', 'record created');
   } else {
     cleanup.push({ obj: 'Contact_Us_Form__c', id: cuf.Id });
     check('Contact_Us_Form__c created',              cuf.Id,               null,                           { notBlank: true });
@@ -395,7 +396,12 @@ async function runSupportFormTest() {
     check('Last_Name__c',                            cuf.Last_Name__c,     `Support-${ts}`);
     check('Email__c',                                cuf.Email__c,         email);
     check('Phone__c',                                cuf.Phone__c,         null,                           { notBlank: true });
-    check('I_would_like_to_hear_more_about__c',      cuf.I_would_like_to_hear_more_about__c, null,         { notBlank: true });
+    check('City__c',                                 cuf.City__c,          'Chicago');
+    check('State__c',                                cuf.State__c,         'IL');
+    check('Country__c',                              cuf.Country__c,       'US');
+    check('Form_Applied__c',                         cuf.Form_Applied__c,  'Becker Contact US');
+    check('I_would_like_to_hear_more_about__c',      cuf.I_would_like_to_hear_more_about__c, 'CPA');
+    check('Please_tell_us_about_your_question__c',   cuf.Please_tell_us_about_your_question__c, 'I need help with my CPA exam access');
     check('Query_Type__c',                           cuf.Query_Type__c,    'Support');
     check('Lead_Source_Form__c',                     cuf.Lead_Source_Form__c, 'Customer Service - Contact Us');
     check('Business_Brand__c',                       cuf.Business_Brand__c, 'Becker');
@@ -403,14 +409,13 @@ async function runSupportFormTest() {
     check('Privacy_Consent_Status__c',               cuf.Privacy_Consent_Status__c, 'OptIn');
 
     // Routing check
-    console.log('\n── Routing: CS - Contact Center Inbound ───`');
+    console.log('\n── Routing: CS - Contact Center Inbound ───');
     if (cuf.OwnerId) {
       const owner = await resolveOwner(cuf.OwnerId);
       console.log(`  Owner: ${owner.type} = ${owner.name}`);
       check('Routed to CS - Contact Center Inbound', owner.name, 'CS - Contact Center Inbound');
     } else {
-      check('OwnerId set on Contact_Us_Form__c', 'null', 'CS - Contact Center Inbound queue',
-        { note: 'OwnerId not set — routing to CS - Contact Center Inbound not yet implemented in flow' });
+      check('OwnerId set on Contact_Us_Form__c', 'null', 'CS - Contact Center Inbound queue');
     }
   }
 
