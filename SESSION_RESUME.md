@@ -1,321 +1,241 @@
-# Becker RFI Agent — Complete Session Context
-## Cold-Start Document for Any Agent, Developer, or Terminal
-### Last Updated: 2026-04-17 | Author: Sam Chaudhary
-
-> **Use this file to resume any work on this project from scratch.**
-> Any AI agent should read this BEFORE touching any code or SF.
+# Becker RFI Agent — Session Resume
+## Last Updated: 2026-04-29 (Session 9) | Flow: v29 Active
+## Read this file first before touching ANY code or SF.
 
 ---
 
 ## What This Project Is
 
-A 3-step React wizard form embedded on `becker.com/contact-us` that:
-1. Captures lead intent (Exploring / Ready to Enroll / B2B / Support)
-2. Routes B2B leads to 6 Salesforce queues via org type × size matrix
-3. Writes to `ExternalWebform__c` in Salesforce → existing SF Flow handles all record creation
-4. Fires SFMC confirmation email + campaign membership for program nurture
+Smart lead routing form for **Becker Professional Education (Colibri Group)**.  
+Replaces a broken contact form that routed all leads to one person (Andy M.) with zero intelligence.
 
-**The problem it solves:** All Becker contact form submissions currently go to Andy M. with zero intelligence. This replaces that with a smart segmented intake.
-
----
-
-## Repo
-
+**Architecture:** Pure Drupal-native — NO Node.js in the live path.
 ```
-GitHub:  https://github.com/samcolibri/becker-rfi-agent
-Local:   ~/becker-rfi-agent/
-Deploy:  Railway (live) — https://becker-rfi-agent.up.railway.app
-Dashboard: https://samcolibri.github.io/becker-rfi-agent/
+Drupal Webform (Brian)
+  → Salesforce Suite module (push on submit)
+    → ExternalWebform__c (SF object)
+      → External_Web_Form_Main_Record_Triggered_Flow_After_Save v21  ← runs FIRST, creates Lead
+      → Create_Leads_Sub_Flow v32                                     ← called by above
+      → Becker_RFI_Lead_Routing v29  ← OUR FLOW — updates Lead, assigns queue, support path
 ```
 
 ---
 
-## Run From Any Terminal
+## Active Flow: Becker_RFI_Lead_Routing v29
+**File:** `flows/Becker_RFI_Lead_Routing_v29.xml`  
+**Sandbox:** https://becker--bpedevf.sandbox.my.salesforce.com  
+**Trigger:** ExternalWebform__c — Create, After Save  
+**Deploy:** `node scripts/rest-deploy.js /tmp/becker_rfi_vNN.zip`
 
-```bash
-# 1. Clone
-git clone https://github.com/samcolibri/becker-rfi-agent.git
-cd becker-rfi-agent
+### Flow Logic (v29)
+1. **Is_Support_Form** — if `Lead_Source_Form__c = 'Customer Service - Contact Us'`
+   - YES → `Create_Contact_Us_Form` (Contact_Us_Form__c with 14 fields + country mapping) → STOP
+   - NO → continue
+2. **Check_Existing_Lead** → find unconverted Lead by email
+3. **Did_Lead_Exist** → update OR create B2B/B2C Lead
+4. **Lookup_Queue** → assign Lead.OwnerId to SF queue
+5. **Should_Create_Campaign_Member** → create CampaignMember if Campaign__c set
+6. **Check_B2B_Account_Owner** → if B2B + real account owner exists → override queue with rep
 
-# 2. Set environment variables (see .env.example for all keys)
-cp .env.example .env
-# Fill in: SF_PASSWORD, and SFMC creds when available
-
-# Required env vars:
-export SF_LOGIN_URL=https://test.salesforce.com
-export SF_API_VERSION=v59.0
-export SF_USERNAME=sam.chaudhary@colibrigroup.com.bpedevf
-export SF_PASSWORD=<password>
-export SF_SECURITY_TOKEN=<token>
-
-# 3. Install + build
-npm install
-npm run build:client     # builds React → public/
-
-# 4. Run
-npm start                # server on :3000
-open http://localhost:3000
-
-# 5. Test routing engine (no SF needed)
-npm test                 # 27 tests, all should pass
-
-# 6. Refresh live dashboard
-node scripts/update-dashboard.js --push
-```
+### Key Formula Variables
+| Variable | What It Does |
+|---|---|
+| `varProductLineMS` | Normalizes EA→"EA Exam Review", CIA_CHALLENGE→"CIA"; from `EW.Primary_Interest__c` |
+| `varComputedQueue` | B2B routing matrix: org type × org size → queue name |
+| `varSubscriptionIds` | Maps product → CommSubscriptionConsent subscription IDs |
+| `varB2BRecordTypeId` | Returns B2B or B2C RecordTypeId based on `Requesting_for__c` |
+| `varCUFProductInterest` | Normalizes CIA_CHALLENGE/EA for Contact_Us_Form__c |
+| `varCUFCountry` | 260-entry ISO code → full country name (split across 3 CASE sub-formulas) |
 
 ---
 
-## Architecture — How It Works End to End
+## EW → Lead Field Mapping (all confirmed in sandbox v29)
 
-```
-FORM SUBMIT (becker.com/contact-us)
-  ↓
-POST /api/submit  (Express, src/server.js)
-  ↓
-Step 1: Email validation (src/email-validator.js)
-  → isLikelySpam() — pattern check + disposable domain
-  → Hunter.io API — verify deliverable
-  → REJECT if invalid — no SF record created
+| EW Field | Lead Field | Notes |
+|---|---|---|
+| `Primary_Interest__c` | `Product_Line__c` | Via varProductLineMS (normalizes EA/CIA). B2C + B2B first value |
+| `Product_Interest__c` | `Product_Line_MS__c` | **B2B multi-select** — all selected products. NEW v29. B2C: unchanged |
+| `Organization_Type__c` | `RFI_Organization_Type__c` | B2B only |
+| `Organization_Size__c` | `RFI_Org_Size_Category__c` | B2B only |
+| `HQ_State__c` | `RFI_HQ_State__c` | B2B only |
+| `Role_Type__c` | `RFI_Role_Type__c` | Both |
+| `Resident_State__c` | `RFI_Resident_State__c` | B2C only |
+| `Is_Current_Becker_Student__c` | `Is_Current_Becker_Student__c` | B2C only |
+| `Lead_Source_Form__c` | `Lead_Source_Form__c` | Both |
+| `Lead_Source_Detail__c` | `Lead_Source_Detail__c` | UTM params |
+| `BusinessBrand__c` | `Business_Brand__c` | Always "Becker" |
+| `CommunicationSubscription__c` | `Subscription_id__c` | Via varSubscriptionIds |
+| `Consent_Provided__c` | `Consent_Provided__c` | multipicklist |
+| `Privacy_Consent_Status__c` | `Privacy_Consent_Status__c` | |
+| `Requesting_for__c` | (drives B2B/B2C branch) | NOT mapped to Lead field |
 
-Step 2: Routing engine (src/routing-engine.js) — B2B ONLY
-  → routeLead(submission) → suggestedQueue
-  → Pure function, 27 unit tests, no network
-  → Org type × employee count → 1 of 6 queues
-
-Step 3: Write to ExternalWebform__c (src/sf-client.js)
-  → SOAP login (no Connected App needed)
-  → POST /sobjects/ExternalWebform__c with all fields
-  → SF Flow CreateCaseLeadandOpportunity.v2 fires automatically
-  → Flow handles: dedup by email, Lead/Opp/Case creation, OwnerId from SuggestedQueue__c
-
-Step 4: SFMC confirmation email (src/sfmc-client.js)
-  → fireJourneyEntry() → "Confirmation Email" journey
-  → < 20 min SLA, all paths
-
-Step 5: Campaign membership
-  → Campaign__c written on ExternalWebform record
-  → MC Connect syncs to SFMC for program nurture emails
-```
-
----
-
-## Salesforce Connection
-
-```
-Type:         SOAP login (no Connected App)
-Login URL:    https://test.salesforce.com  (sandbox: bpedevf)
-Prod URL:     https://login.salesforce.com (when Angel creates prod creds)
-Username:     sam.chaudhary@colibrigroup.com.bpedevf
-Org:          Becker Professional Education (Unlimited Edition, USA654S)
-Instance:     https://becker--bpedevf.sandbox.my.salesforce.com
-API Version:  v59.0
-
-# Test connection:
-node -e "require('dotenv').config(); require('./src/sf-client').searchAccounts('Deloitte').then(console.log)"
-```
+### EW → Contact_Us_Form__c (Support path)
+| EW Field | CUF Field |
+|---|---|
+| `First_Name__c` | `First_Name__c` |
+| `Last_Name__c` | `Last_Name__c` |
+| `Email__c` | `Email__c` |
+| `Phone__c` | `Phone__c` |
+| `Address__City__s` | `City__c` |
+| `Address__StateCode__s` | `State__c` |
+| `Address__CountryCode__s` | `Country__c` (via varCUFCountry ISO→full name) |
+| `Primary_Interest__c` | `I_would_like_to_hear_more_about__c` (via varCUFProductInterest) |
+| `If_other__c` | `Please_tell_us_about_your_question__c` |
+| `Lead_Source_Form__c` | `Lead_Source_Form__c` |
+| `Lead_Source_Form_Date__c` | `Lead_Source_Form_Date__c` |
+| Hardcoded `'Becker Contact US'` | `Form_Applied__c` |
+| Hardcoded `'Support'` | `Query_Type__c` |
 
 ---
 
-## ExternalWebform__c — Field Mapping
-
-### Fields that EXIST today (confirmed via SF describe API)
+## Sandbox Credentials (in .env)
 ```
-Email__c                                   ← email
-First_Name__c                              ← firstName
-Last_Name__c                               ← lastName
-Phone__c                                   ← phone
-Company__c                                 ← orgName
-Primary_Interest__c                        ← productInterest
-Address__StateCode__s                      ← state
-YearInSchool__c                            ← graduationYear
-email_address_you_use_to_login_to_Becker__c ← beckerStudentEmail
-BusinessBrand__c                           = 'Becker Professional Education Corporation'
-Lead_Source_Form__c                        = 'Web - Contact Us Form'
-Lead_Source_Form_Date__c                   = new Date().toISOString()
-Campaign__c                                ← getCampaignId(intentPath, productInterest)
-Consent_Provided__c                        ← consentGiven ? 'Commercial Marketing' : null
-Consent_Captured_Source__c                 = 'RFI Form — becker.com/contact-us'
-Privacy_Consent_Status__c                  ← privacyConsent ? 'Accepted' : null
-If_other__c                                ← message (support path)
+SF_USERNAME=sam.chaudhary@colibrigroup.com.bpedevf
+SF_LOGIN_URL=https://test.salesforce.com
+SF_INSTANCE_URL=https://becker--bpedevf.sandbox.my.salesforce.com
 ```
 
-### Fields MISSING — Angel Cichy must create in SF Setup
-```
-IntentPath__c      Picklist   exploring | ready | b2b | support
-OrganizationType__c Picklist  Accounting Firm | Corp/Healthcare/Bank/Financial Institution | Consulting Firm | CPA Alliance | Government Agency/Not-for-Profit | Society/Chapter | Non-US Organization | Student | University | Other
-RoleType__c        Picklist   Undergrad Student | Grad Student | Professor | Supervisor/Director/Manager | Partner/CEO/CFO | Administrator | Unemployed | Learning/Training Leader | Staff Accountant | Other
-OrgSizeCategory__c Picklist   <25 | 26-100 | 101-250 | 251+
-SuggestedQueue__c  Text(100)  Free text — routing engine writes queue name here
-LeadSourceDetail__c Text(255) UTM params string
-QueryType__c       Picklist   Sales Query | Support Query
-```
+### Key Sandbox IDs
+| Item | ID |
+|---|---|
+| B2B Lead RecordTypeId | `012i0000001E3hmAAC` |
+| B2C Lead RecordTypeId | `01231000000y0UoAAI` |
+| CS - Inside Sales queue | `00G3r000005Z3dLEAS` |
+| CS - Contact Center Inbound queue | `00Gi0000002CIZqEAO` |
 
 ---
 
-## B2B Routing Matrix (source of truth — also in routing-engine.js)
+## Test Results (session 8 — 2026-04-27)
+- **113/113 Huma QA checks passing** ✅ → `node scripts/huma-test-scenarios.js`
+- **30/30 E2E Drupal→SF assertions passing** ✅ → `node scripts/e2e-drupal-form.js`
 
+---
+
+## B2B Routing Matrix
 | Org Type | <25 | 26-100 | 101-250 | 251+ |
 |---|---|---|---|---|
 | Accounting Firm | Inside Sales | Global Firms | Global Firms | Global Firms |
-| Corp/Healthcare/Bank/Fin Inst | Inside Sales | New Client Acquisition | New Client Acquisition | New Client Acquisition |
+| Corporation/Healthcare/Bank | Inside Sales | New Client Acq. | New Client Acq. | New Client Acq. |
 | Consulting Firm | Global Firms | Global Firms | Global Firms | Global Firms |
 | CPA Alliance | Global Firms | Global Firms | Global Firms | Global Firms |
-| Gov Agency/NFP | Inside Sales | New Client Acquisition | New Client Acquisition | New Client Acquisition |
+| Gov/NFP | Inside Sales | New Client Acq. | New Client Acq. | New Client Acq. |
 | Society/Chapter | University | University | University | University |
-| Non-US Organization | International | International | International | International |
-| Student | Inside Sales | Inside Sales | Inside Sales | Inside Sales |
+| Non-US Org | International | International | International | International |
+| Student / Other | Inside Sales | Inside Sales | Inside Sales | Inside Sales |
 | University | University | University | University | University |
-| Other | Inside Sales | Inside Sales | Inside Sales | Inside Sales |
 
-**Special rule:** If email matches existing Business Account → both Lead + Opp assigned to BA Owner, ignoring matrix.
-
----
-
-## Campaign ID Mapping (confirmed 2026-04-17)
-
-| Intent | Product | SF Campaign ID |
-|---|---|---|
-| B2C | Certified Public Accountant | 7013r000001l0CwAAI |
-| B2C | Certified Management Accountant | 7013r000001l0DBAAY |
-| B2C | Continuing Professional Education | 7013r000001l0D6AAI |
-| B2C | Certified Internal Auditor | 701VH00000coo8bYAA |
-| B2C | Enrolled Agent | 701VH00000cnfxAYAQ |
-| B2C | Certified Financial Planner | 701VH00000tZNTXYA4 |
-| B2C | Staff Level Training | 701VH00000tZPTiYAO |
-| B2C | CIA Challenge Exam | 701VH00000tZQ6QYAW |
-| B2B | All products | 701VH00000tZOSqYAO |
-| Support | — | null |
-
-Logic: `getCampaignId(intentPath, productInterest)` in `src/lead-processor.js`
+B2C always → CS - Inside Sales
 
 ---
 
-## Key Architectural Decisions (DO NOT CHANGE without reviewing)
-
-1. **ExternalWebform__c is entry point** — NOT direct Lead creation. SF Flow handles everything downstream.
-2. **SF Flow CreateCaseLeadandOpportunity.v2** — Huma Yousuf owns this Flow. It handles dedup, Lead/Opp/Case, OwnerId assignment.
-3. **SuggestedQueue__c** — Routing engine writes queue name here. Flow reads it to set OwnerId.
-4. **No Connected App needed** — SOAP login only requires username + password + security token.
-5. **No Concierge hardcode** — B2C Ready goes to same program-matched campaign as Exploring. Concierge = CPA product only.
-6. **Campaign__c drives SFMC** — MC Connect syncs Campaign Members → SFMC email sends. No Journey entry event keys needed initially.
+## Known Gotchas (SILENT FAILURES — read before testing)
+1. **Phone format** — SF requires `(XXX) XXX-XXXX`. Dashes (`312-555-0100`) → EW created but Lead silently not created.
+2. **Duplicate phone** — Same phone on multiple EW records → only first Lead created.
+3. **Concurrent EW + same phone** — Create sequentially with 35s wait between each.
+4. **Country__c restricted picklist** — Accepts full names only ("United States"), not ISO codes. Flow handles this via varCUFCountry CASE formula.
+5. **Queue ownership** — CS - Contact Center Inbound not yet associated with Contact_Us_Form__c → OwnerId routing disabled until Angel fixes.
+6. **Flow execution order** — External_Web_Form... v21 runs BEFORE our flow (SF: oldest first). It creates the Lead. We update it.
+7. **Support path creates Lead too** — v21 fires on ALL EW records including support; creates a Lead even when we create CUF. Known gap.
+8. **Wait times** — 35s after EW create for Lead; 45s if Campaign__c is set.
+9. **CIA RecordType restriction** — `CreateCaseLeadandOpportunity.v2` creates Cases with Web_Request RecordType. That RecordType only allows CMA/CPA/CPE for `I_would_like_to_hear_more_about__c`. Angel must add CIA/CFP/EA CE/EA Exam Review/Becker Academy. Until fixed, CIA support submissions fail with INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST.
 
 ---
 
-## Stakeholders (do not contact without Sam's approval)
+## 2026-04-28 Meeting Decisions (form changes pending from Brian)
+All confirmed by Josh Elefante, Huma Yousuf, Brian Clement:
 
-| Person | Company | Role | What they own |
+| Change | Detail |
+|---|---|
+| **Account lookup** | B2B only. Reuse "Find Your Organization" SF controller. Query: `Account WHERE Record_Type_Name__c = 'Business account'` (no org type filter). "My company isn't listed" → free text fallback. |
+| **B2B multi-select product** | `EW.Product_Interest__c` (multipicklist) → `Lead.Product_Line_MS__c`. First value → `EW.Primary_Interest__c`. SF flow (v29) already handles this. Brian needs to wire Drupal form. |
+| **Phone on B2C** | Add phone field to B2C paths (currently B2B only). |
+| **"How can we help?" field** | Add to both B2C and B2B. Reuse support form's `If_other__c` field. |
+| **Remove consent step** | Merge consent to bottom of Step 2. Submit replaces Next. Legal copy from Josh. |
+| **SMS checkbox** | Separate opt-in. Email + Phone always in CommSubscriptionConsent. SMS only if checked. |
+| **Label renames** | "Role Type"→"What best describes you", "Resident State"→"State", "HQ State"→"Headquarters State", "# of Employees"→"Number of employees or members" |
+| **Graduation Year conditional** | Show only if role = Undergrad/Grad Student |
+| **HQ State conditional** | Hide if org type = Non-US Organization |
+
+**Pending from Brian (BIT-10446):** All of the above Drupal form + SF mapping changes.
+
+---
+
+## Jira Epic: BIT-10392
+**URL:** https://beckeredu.atlassian.net/browse/BIT-10392
+
+| Ticket | Status | Owner | What |
 |---|---|---|---|
-| Angel Cichy | Becker/Colibri | SF Admin | Create 7 fields, confirm picklist values, SF Connected App creds |
-| Huma Yousuf | Becker/Colibri | SF Developer | Update SF Flow, confirm assignment rules inactive |
-| Monica Callahan | Becker/Colibri | Business Owner | Architecture approval (sent 2026-04-16) |
-| Josh Elefante | Becker/Colibri | Product Lead | Form UX sign-off (sent 2026-04-16) |
-| Nick Leavitt | Becker/Colibri | SFMC / Campaigns | Post-form nurture journey definitions |
-| Dakshesh | 5X | Drupal Team | React form embed on becker.com |
+| BIT-10446 | Development | Brian | Drupal form changes (meeting decisions above) |
+| BIT-10389 | Open | Huma | Confirm CommSubscriptionConsent channel types (SMS new req) |
+| BIT-10390 | Open | Huma | Confirm Lead duplicate rules inactive in prod |
+| BIT-10379–88 | Done ✅ | — | All SF field creation + flow work |
+| BIT-10381, 10384 | Cancelled | — | Connected App (not needed), Dedup flow (SF native) |
 
 ---
 
-## Blockers Before Go-Live (in order)
+## Pending Blockers Before Go-Live
 
-1. **[P0] Angel: create 7 fields on ExternalWebform__c** → unblocks live submission test
-2. **[P0] Angel + Huma: SF Connected App creds + SFMC creds** → unblocks Railway prod deploy
-3. **[P1] Huma: update SF Flow** → unblocks automatic lead routing
-4. **[P1] Monica + Josh: architecture approval** → unblocks official launch
-5. **[P2] Sam: intro Dakshesh** → unblocks becker.com embed
-6. **[P2] Nick: post-form journey definitions** → unblocks SFMC nurture
-
----
-
-## Files of Record
-
-```
-src/server.js           Express API — POST /api/submit, GET /api/accounts, GET /health
-src/lead-processor.js   Orchestration — email validate → route → create webform → email
-src/sf-client.js        SOAP login + all SF CRUD operations
-src/sfmc-client.js      SFMC Journey Builder API client (11 journeys, token caching)
-src/routing-engine.js   Pure routing function — org type × size → queue (27 unit tests)
-src/email-validator.js  Hunter.io + spam pattern filter
-client/src/app/App.tsx  React 3-step wizard (Becker Figma design, Framer Motion)
-tests/                  27 routing engine unit tests
-docs/index.html         Living project dashboard (GitHub Pages)
-docs/data.json          Dashboard data — refresh: node scripts/update-dashboard.js --push
-scripts/update-dashboard.js  Pulls live SF data → updates dashboard → git push
-ARCHITECTURE.md         Full architecture for stakeholder review
-SETUP.md                Step-by-step deployment guide
-EXECUTIVE_SUMMARY.md    Non-technical stakeholder summary
-```
+| # | Owner | Action |
+|---|---|---|
+| 1 | **Angel Cichy** | Add CIA, CFP, Becker Academy, EA CE, EA Exam Review to Web_Request Case RecordType picklist for `I_would_like_to_hear_more_about__c` |
+| 2 | **Angel Cichy** | Add `Contact_Us_Form__c` to CS-Contact Center Inbound queue supported objects → re-enable OwnerId routing in flow |
+| 3 | **Angel/Huma** | Build Case auto-creation from Contact_Us_Form__c (Case__c lookup exists, no automation) |
+| 4 | **Brian** | BIT-10446 — all 2026-04-28 form changes |
+| 5 | **Josh** | Provide legal-approved consent language text |
+| 6 | **Sam** | SF prod Connected App creds (SF_CLIENT_ID, SF_CLIENT_SECRET, SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN) |
+| 7 | **Sam** | SFMC creds + 11 journey event keys |
+| 8 | **Angel** | Confirm 7 SF queue API names match prod |
+| 9 | **Huma** | Confirm Lead assignment rules inactive in prod (BIT-10390) |
+| 10 | **Campaign IDs** | Update to prod values (current = dev sandbox) |
+| 11 | **RecordType IDs** | Verify B2B/B2C IDs for prod (sandbox-specific) |
 
 ---
 
-## Railway Deployment
+## Key People
+| Person | Role | Owns |
+|---|---|---|
+| Huma Yousuf | SF Developer | QA, smoke testing, SF field/flow changes |
+| Angel Cichy | SF Admin | Field creation, queue config, flow deploy to prod |
+| Brian Clement | Drupal Dev | Webform config + SF mapping on dev.becker.com |
+| Josh Elefante | Product Lead | Form UX, consent copy, form sign-off |
+| Monica Callahan | Business Owner | Requirements, routing rules |
+| Nick Leavitt | SFMC | Post-form journey definitions |
+| Diogo Marcos | Drupal Admin | dev.becker.com access |
 
+---
+
+## How to Deploy a New Flow Version
 ```bash
-# Install Railway CLI (if not installed)
-brew install railway
-
-# Login
-railway login
-
-# Link to project (first time)
-railway init   # or: railway link
-
-# Set all env vars
-railway variables set SF_LOGIN_URL=https://test.salesforce.com
-railway variables set SF_USERNAME=sam.chaudhary@colibrigroup.com.bpedevf
-railway variables set SF_PASSWORD=<password>
-railway variables set SF_SECURITY_TOKEN=<token>
-# ... (set all vars from .env.example)
-
-# Deploy
-railway up
-
-# Logs
-railway logs
-
-# Health check
-curl https://becker-rfi-agent.up.railway.app/health
+# 1. Edit /tmp/becker_rfi_vNN.xml (copy from previous version)
+# 2. Build ZIP (no ./ prefix — critical)
+python3 -c "
+import zipfile
+pkg = open('/path/to/package.xml').read()  # see scripts/rest-deploy.js for pkg content
+with zipfile.ZipFile('/tmp/becker_rfi_vNN.zip','w',zipfile.ZIP_DEFLATED) as zf:
+    zf.writestr('package.xml', pkg)
+    zf.writestr('flows/Becker_RFI_Lead_Routing.flow', open('/tmp/becker_rfi_vNN.xml').read())
+"
+# 3. Deploy
+node scripts/rest-deploy.js /tmp/becker_rfi_vNN.zip
+# 4. Copy to repo
+cp /tmp/becker_rfi_vNN.xml flows/Becker_RFI_Lead_Routing_vNN.xml
 ```
 
----
-
-## Quick Smoke Test (after deploy)
-
-```bash
-# 1. Health
-curl https://becker-rfi-agent.up.railway.app/health
-
-# 2. Account search
-curl "https://becker-rfi-agent.up.railway.app/api/accounts?q=Deloitte"
-
-# 3. Full form submission (B2B path)
-curl -X POST https://becker-rfi-agent.up.railway.app/api/submit \
-  -H "Content-Type: application/json" \
-  -d '{
-    "firstName": "Test",
-    "lastName": "Submission",
-    "email": "test@testfirm.com",
-    "intentPath": "b2b",
-    "orgName": "Test Accounting Firm",
-    "orgType": "Accounting Firm",
-    "orgSize": "26-100",
-    "productInterest": "Certified Public Accountant",
-    "roleType": "Partner/CEO/CFO",
-    "consentGiven": true,
-    "privacyConsent": true
-  }'
-# Expected: { "status": "created", "webformId": "a7I...", "queue": "Global Firms" }
-```
+**XML schema order required:** assignments → decisions → formulas → label → processMetadataValues → processType → recordCreates → recordLookups → recordUpdates → start → status → variables
 
 ---
 
-## If You Are an AI Agent Reading This
-
-1. **Do not create Leads directly** — always write to ExternalWebform__c
-2. **Do not modify the routing matrix** without re-running the 27 unit tests
-3. **Do not add SFMC journey keys** until Nick Leavitt confirms post-form journeys
-4. **Do not deploy to prod SF** until Monica + Josh approve
-5. **SOAP login** — use `src/sf-client.js`, no Connected App needed
-6. **Session resume** — the dashboard at https://samcolibri.github.io/becker-rfi-agent/ shows current blockers and field status live
+## Key Files
+| File | Purpose |
+|---|---|
+| `flows/Becker_RFI_Lead_Routing_v29.xml` | Current active flow XML |
+| `scripts/huma-test-scenarios.js` | 113-check automated QA test suite |
+| `scripts/e2e-drupal-form.js` | E2E Playwright: Drupal form → SF verify (30 assertions) |
+| `scripts/rest-deploy.js` | Deploy flow via SF Metadata REST API |
+| `docs/UAT_TEST_SCRIPT.md` | Human UAT guide for Huma/team |
+| `drupal/BRIAN_DEPLOY.md` | Drupal deploy guide for Brian |
+| `src/routing-engine.js` | B2B routing matrix (27 unit tests) |
 
 ---
 
-*Generated: 2026-04-17 | Repo: github.com/samcolibri/becker-rfi-agent*
+*Last updated: 2026-04-29 | Flow: v29 | Tests: 113/113 ✅*
